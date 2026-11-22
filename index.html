@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Envuelve tu Casa — Diagnóstico Térmico Residencial para Santiago</title>
+  <meta name="description" content="Diagnóstico térmico gratuito para casas y departamentos de Santiago. Mejora el confort de tu hogar con soluciones de bajo costo y subsidios estatales." />
+
+  <!-- Tipografías -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            heading: ['Plus Jakarta Sans', 'system-ui', 'sans-serif']
+          }
+        }
+      }
+    };
+  </script>
+
+  <!-- Chart.js & Supabase CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    body {
+      background-color: #F8FAFC;
+      color: #1E293B;
+      font-family: 'Inter', system-ui, sans-serif;
+    }
+    .font-heading {
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    }
+    @media print {
+      .no-print { display: none !important; }
+      body { background: #ffffff !important; }
+      header, footer { display: none !important; }
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- Barra de Navegación -->
+  <header class="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-slate-200 no-print">
+    <div class="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between gap-3">
+      <button onclick="window.EnvuelveApp.navigateTo('/')" class="flex items-center gap-2.5 text-left cursor-pointer">
+        <span class="w-9 h-9 rounded-xl bg-[#0F3D5E] text-white flex items-center justify-center font-heading font-extrabold text-lg">E</span>
+        <div>
+          <span class="font-heading font-extrabold text-[#0F3D5E] text-base sm:text-lg block leading-none">Envuelve tu Casa</span>
+          <span class="text-[11px] text-slate-500 hidden sm:block">Diagnóstico Térmico · Santiago</span>
+        </div>
+      </button>
+
+      <nav class="flex items-center gap-3 sm:gap-6 text-xs sm:text-sm font-medium">
+        <button data-nav-link="/" onclick="window.EnvuelveApp.navigateTo('/')" class="text-slate-600 hover:text-[#0F3D5E] transition cursor-pointer">Inicio</button>
+        <button data-nav-link="/encuesta" onclick="window.EnvuelveApp.navigateTo('/encuesta')" class="text-slate-600 hover:text-[#0F3D5E] transition cursor-pointer">Encuesta</button>
+        <button data-nav-link="/resultado" onclick="window.EnvuelveApp.navigateTo('/resultado')" class="text-slate-600 hover:text-[#0F3D5E] transition cursor-pointer">Diagnóstico</button>
+        <button data-nav-link="/soluciones" onclick="window.EnvuelveApp.navigateTo('/soluciones')" class="text-slate-600 hover:text-[#0F3D5E] transition cursor-pointer">Soluciones</button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Contenido Principal -->
+  <main id="app-main" class="flex-1"></main>
+
+  <!-- Asistente Interactivo Guiado -->
+  <div id="assistant-root"></div>
+
+  <!-- Pie de página -->
+  <footer class="bg-white border-t border-slate-200 py-6 mt-auto no-print">
+    <div class="max-w-5xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
+      <p><strong>Envuelve tu Casa</strong> · Herramienta gratuita de pre-diagnóstico térmico para la RM (Zona Térmica D).</p>
+      <p>Metodología referencial basada en el Manual CEV (MINVU) · Estrategia Nacional de Calor y Frío.</p>
+    </div>
+  </footer>
+
+  <!-- Scripts de la aplicación (sin necesidad de compilación) -->
+  <script src="supabaseConfig.js"></script>
+  <script src="thermalEngine.js"></script>
+  <script src="questionsData.js"></script>
+  <script src="solutionsCatalog.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
