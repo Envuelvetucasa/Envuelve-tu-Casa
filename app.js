@@ -101,7 +101,6 @@
 
   // --- Guardado en Base de Datos (Supabase + respaldo local) ---
   async function saveDiagnosisRecord(payload) {
-    // Siempre guarda copia local para demo/offline
     try {
       const existing = JSON.parse(localStorage.getItem(STORAGE_LOCAL_DB_KEY) || "[]");
       existing.unshift({ ...payload, created_at: new Date().toISOString() });
@@ -454,7 +453,6 @@
       result
     };
 
-    // Configurar pestaña inicial de soluciones según presupuesto y tenencia
     filterArrendatarioOnly = lastDiagnosis.tenencia === "arrendatario";
     if (lastDiagnosis.presupuesto === "bajo" || lastDiagnosis.tenencia === "arrendatario") {
       activeSolutionTab = "bajo_costo";
@@ -464,7 +462,6 @@
 
     saveState();
 
-    // Guardar de forma asíncrona sin bloquear la vista
     const dbPayload = {
       comuna: input.comuna,
       tipo_vivienda: input.tipoVivienda,
@@ -562,12 +559,9 @@
       .join("");
 
     const whatsappText = encodeURIComponent(
-      `🏠 Diagnóstico Térmico "Envuelve tu Casa" (${normalizedInput.comuna}):
-` +
-      `• Etiqueta estimada CEV: ${result.letraEstimada} (${result.ahorroEstimadoPct >= 0 ? "+" : ""}${result.ahorroEstimadoPct}% vs estándar base)
-` +
-      `• Confort Invierno: ${result.puntajeInvierno}/100 | Protección Verano: ${result.puntajeVerano}/100
-` +
+      `🏠 Diagnóstico Térmico "Envuelve tu Casa" (${normalizedInput.comuna}):\n` +
+      `• Etiqueta estimada CEV: ${result.letraEstimada} (${result.ahorroEstimadoPct >= 0 ? "+" : ""}${result.ahorroEstimadoPct}% vs estándar base)\n` +
+      `• Confort Invierno: ${result.puntajeInvierno}/100 | Protección Verano: ${result.puntajeVerano}/100\n` +
       `• U estimado ventanas: ${result.uVentanaEstimado} W/m²K`
     );
 
@@ -681,7 +675,6 @@
     const debilidades = lastDiagnosis ? lastDiagnosis.result.debilidades : null;
     const tenencia = lastDiagnosis ? lastDiagnosis.tenencia : "dueno";
 
-    // Filtrar por debilidades detectadas (o mostrar todo si entra directo sin encuesta)
     let matchedSolutions = catalog.solutions;
     if (debilidades && debilidades.length > 0) {
       matchedSolutions = catalog.solutions.filter((s) =>
@@ -968,10 +961,8 @@
       </section>
     `;
 
-    // Guardar filas temporalmente para exportar CSV
     window.__lastStatsRows = rows;
 
-    // Renderizar gráfico con Chart.js
     const canvas = document.getElementById("cevChartCanvas");
     if (canvas && window.Chart) {
       if (statsChart) statsChart.destroy();
@@ -1018,9 +1009,10 @@
     ];
     const csvLines = [headers.join(",")];
     rows.forEach((r) => {
+      const safeComuna = String(r.comuna || "").split('"').join('""');
       const vals = [
         r.created_at || "",
-        `"${(r.comuna || "").replace(/"/g, '""')}"`,
+        `"${safeComuna}"`,
         r.tipo_vivienda || "",
         r.antiguedad || "",
         r.letra_estimada || "",
@@ -1031,8 +1023,7 @@
       ];
       csvLines.push(vals.join(","));
     });
-    const blob = new Blob([csvLines.join("
-")], { type: "text/csv;charset=utf-8;" });
+    const blob = new Blob([csvLines.join("\n")], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
