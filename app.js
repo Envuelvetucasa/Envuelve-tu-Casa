@@ -170,7 +170,7 @@
           </div>
 
           <h1 class="font-heading text-3xl sm:text-5xl font-extrabold text-[#0F3D5E] leading-tight tracking-tight max-w-3xl">
-            Descubre cuánto frío o calor deja entrar tu casa, en 3 minutos.
+            Descubre qué tan aislado térmicamente está tu hogar en menos de 5 minutos.
           </h1>
 
           <p class="mt-4 text-base sm:text-lg text-slate-600 max-w-2xl leading-relaxed">
