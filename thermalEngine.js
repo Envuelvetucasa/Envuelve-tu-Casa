@@ -1,8 +1,7 @@
-// Motor de Pre-Diagnóstico Térmico "Iniciativa Envuelve tu Casa"
-// Calibrado según parámetros del Manual Técnico CEV (MINVU) - Zona Térmica D (Santiago)
+// Motor de Pre-Diagnóstico Térmico "Iniciativa Envuelve tu Casa" v2.0
+// Basado referencialmente en parámetros del Manual Técnico CEV (MINVU) - Zona Térmica D (Santiago)
 
 (function (global) {
-  // Tabla 4 y Ecuación 1 (FS = CS * 0.87) del Manual CEV
   const U_VIDRIO = {
     monolitico: { u: 5.8, fs: 0.87 },
     doble_ventana: { u: 3.3, fs: 0.774 },
@@ -10,7 +9,6 @@
     dvh_alto: { u: 2.85, fs: 0.774 }
   };
 
-  // Tablas 5 y 6 del Manual CEV (U marco y Factor de Marco FM)
   const MARCO_DATA = {
     madera: { u: 2.6, fm: 0.75 },
     pvc: { u: 2.8, fm: 0.8 },
@@ -19,7 +17,6 @@
     acero: { u: 5.8, fm: 0.85 }
   };
 
-  // Sección 6.7.2 Manual CEV (Infiltraciones según tipo de cierre)
   const FACTOR_CIERRE = {
     fija: 0.85,
     abatir_proyectante: 0.9,
@@ -27,42 +24,58 @@
     guillotina_antigua: 1.28
   };
 
-  // Factor de compacidad / superficie expuesta (refleja elementos adiabáticos U = 0 en CEV)
+  // Factor de compacidad / superficie expuesta (distingue casa aislada, pareada y continua)
   const FACTOR_COMPACIDAD = {
     casa_aislada: 1.06,
     casa_pareada: 0.98,
+    casa_continua: 0.91,
     depto_ultimo_piso: 0.94,
     depto_primer_piso: 0.9,
     depto_intermedio: 0.82
   };
 
+  // Comunas RM con sectores sobre 2.000 MSNM (Zona Térmica H según Anexo F Manual CEV)
+  const COMUNAS_PRECORDILLERA_ZONA_H = ["Lo Barnechea", "Colina", "San José de Maipo"];
+
+  // Supuestos conservadores de referencia cuando el usuario marca "No sé"
   const DEFAULTS_NO_SE = {
     antiguedad: "16_20",
     materialMuro: "ladrillo_sin_aislacion",
+    piso: "piso_sobre_terreno",
     vidrio: "monolitico",
     marco: "aluminio_sin_rpt",
     cierreVentana: "corredera",
     puerta: "madera_entablerada",
     sienteChiflon: false,
+    humedadCondensacion: false,
     orientacionPrincipal: "oriente",
-    tieneAleroOToldo: false,
+    tieneAleroOToldo: "ninguno",
     nivelSombraEntorno: "parcial"
   };
 
-  // Figura 1: Escala oficial CEV (p. 9 Manual CEV)
-  function mapAhorroToCEVLetter(ahorroPct) {
-    if (ahorroPct > 85) return "A+";
-    if (ahorroPct > 70) return "A";
-    if (ahorroPct > 55) return "B";
-    if (ahorroPct > 40) return "C";
-    if (ahorroPct > 20) return "D";
-    if (ahorroPct > -10) return "E";
-    if (ahorroPct > -35) return "F";
+  const LETTERS_ORDER = ["A+", "A", "B", "C", "D", "E", "F", "G"];
+
+  function mapAhorroToCEVLetter(indicePct) {
+    if (indicePct > 85) return "A+";
+    if (indicePct > 70) return "A";
+    if (indicePct > 55) return "B";
+    if (indicePct > 40) return "C";
+    if (indicePct > 20) return "D";
+    if (indicePct > -10) return "E";
+    if (indicePct > -35) return "F";
     return "G";
   }
 
+  function normalizeAleroValue(rawVal) {
+    if (rawVal === "completo" || rawVal === "parcial" || rawVal === "ninguno") return rawVal;
+    // Compatibilidad con respuestas antiguas guardadas en localStorage (true/false)
+    if (rawVal === true || rawVal === "true") return "completo";
+    if (rawVal === false || rawVal === "false") return "ninguno";
+    return "ninguno";
+  }
+
   function normalizeSurveyAnswers(rawAnswers) {
-    let estimatedFieldsCount = 0;
+    const estimatedFields = [];
     const normalized = {};
 
     normalized.comuna = rawAnswers.comuna || "Santiago";
@@ -72,59 +85,105 @@
       normalized.tipoVivienda === "depto_intermedio" ||
       normalized.tipoVivienda === "depto_primer_piso";
 
-    normalized.techo = esTechoAdiabatico
-      ? "adiabatico"
-      : (rawAnswers.techo || "aislacion_basica");
+    const esPisoAdiabatico =
+      normalized.tipoVivienda === "depto_intermedio" ||
+      normalized.tipoVivienda === "depto_ultimo_piso";
+
+    if (esTechoAdiabatico) {
+      normalized.techo = "adiabatico";
+    } else {
+      normalized.techo = rawAnswers.techo || "aislacion_basica";
+      if (rawAnswers.techo === "aislacion_basica") {
+        // Opcionalmente no suma a no_se estricto porque puede ser básica conocida, pero si no respondió se estima
+      }
+    }
+
+    if (esPisoAdiabatico) {
+      normalized.piso = "adiabatico";
+    } else if (rawAnswers.piso === "no_se" || !rawAnswers.piso) {
+      normalized.piso = DEFAULTS_NO_SE.piso;
+      if (rawAnswers.piso === "no_se") estimatedFields.push("piso");
+    } else {
+      normalized.piso = rawAnswers.piso;
+    }
 
     Object.keys(DEFAULTS_NO_SE).forEach((field) => {
+      if (field === "piso") return; // ya procesado arriba
       const val = rawAnswers[field];
       if (val === "no_se" || val === undefined || val === null || val === "") {
         normalized[field] = DEFAULTS_NO_SE[field];
-        if (val === "no_se") estimatedFieldsCount += 1;
-      } else if (field === "sienteChiflon" || field === "tieneAleroOToldo") {
+        if (val === "no_se") estimatedFields.push(field);
+      } else if (field === "sienteChiflon" || field === "humedadCondensacion") {
         normalized[field] = val === true || val === "true";
+      } else if (field === "tieneAleroOToldo") {
+        normalized[field] = normalizeAleroValue(val);
       } else {
         normalized[field] = val;
       }
     });
 
+    // Campos de perfil (no afectan puntaje de envolvente, sí filtran soluciones)
+    normalized.calefaccionActual = rawAnswers.calefaccionActual || "estufa_electrica_gas_parafina";
+    normalized.tenencia = rawAnswers.tenencia || "dueno";
+    normalized.presupuesto = rawAnswers.presupuesto || "bajo";
+
     return {
       input: normalized,
-      estimatedFieldsCount: estimatedFieldsCount
+      estimatedFieldsCount: estimatedFields.length,
+      estimatedFields: estimatedFields
     };
   }
 
-  function calculateThermalDiagnosis(input) {
+  function calculateThermalDiagnosis(input, estimatedFieldsCount) {
+    const estCount = typeof estimatedFieldsCount === "number" ? estimatedFieldsCount : 0;
     const debilidades = new Set();
 
+    const tv = input.tipoVivienda;
     const esTechoAdiabatico =
-      input.tipoVivienda === "depto_intermedio" ||
-      input.tipoVivienda === "depto_primer_piso" ||
-      input.techo === "adiabatico";
+      tv === "depto_intermedio" || tv === "depto_primer_piso" || input.techo === "adiabatico";
+    const esPisoAdiabatico =
+      tv === "depto_intermedio" || tv === "depto_ultimo_piso" || input.piso === "adiabatico";
 
-    let wTecho = 0.35;
-    let wMuro = 0.30;
-    let wVentana = 0.25;
-    let wPuerta = 0.10;
+    // Pesos dinámicos por elemento de la envolvente (suman 1.00 en cada tipología)
+    let wTecho = 0.32;
+    let wMuro = 0.28;
+    let wVentana = 0.22;
+    let wPuerta = 0.08;
+    let wPiso = 0.10;
 
-    if (input.tipoVivienda === "casa_pareada") {
-      wTecho = 0.38;
-      wMuro = 0.24;
-      wVentana = 0.28;
-      wPuerta = 0.10;
-    } else if (input.tipoVivienda === "depto_ultimo_piso") {
+    if (tv === "casa_pareada") {
+      wTecho = 0.34;
+      wMuro = 0.22;
+      wVentana = 0.25;
+      wPuerta = 0.09;
+      wPiso = 0.10;
+    } else if (tv === "casa_continua") {
+      wTecho = 0.36;
+      wMuro = 0.18;
+      wVentana = 0.27;
+      wPuerta = 0.09;
+      wPiso = 0.10;
+    } else if (tv === "depto_ultimo_piso") {
       wTecho = 0.40;
       wMuro = 0.22;
       wVentana = 0.30;
       wPuerta = 0.08;
-    } else if (esTechoAdiabatico) {
-      wTecho = 0;
+      wPiso = 0.0;
+    } else if (tv === "depto_primer_piso") {
+      wTecho = 0.0;
+      wMuro = 0.30;
+      wVentana = 0.42;
+      wPuerta = 0.10;
+      wPiso = 0.18;
+    } else if (tv === "depto_intermedio") {
+      wTecho = 0.0;
       wMuro = 0.38;
       wVentana = 0.50;
       wPuerta = 0.12;
+      wPiso = 0.0;
     }
 
-    // 1. Techo (OGUC 2007 Zona 3/D: aislación estándar ~ referencia 0.95)
+    // 1. Techo
     const techoDemandMap = {
       adiabatico: 0,
       sin_aislacion: 1.85,
@@ -137,21 +196,32 @@
       debilidades.add("fuga_techo");
     }
 
-    // 2. Muros (OGUC 2007 Zona 3/D: muro aislado interior ~ 0.82, exterior ~ 0.30)
+    // 2. Piso / contacto inferior
+    const pisoDemandMap = {
+      adiabatico: 0,
+      piso_ventilado_estacionamiento: 1.6,
+      piso_sobre_terreno: 1.15,
+      piso_aislado: 0.45
+    };
+    const dPiso = esPisoAdiabatico ? 0 : (pisoDemandMap[input.piso] ?? 1.15);
+    if (!esPisoAdiabatico && (input.piso === "piso_ventilado_estacionamiento" || input.piso === "piso_sobre_terreno")) {
+      debilidades.add("fuga_piso");
+    }
+
+    // 3. Muros (Tabla 3 Manual CEV: deterioro por antigüedad en ladrillo y adobe)
     const muroBaseMap = {
       ladrillo_sin_aislacion: 1.35,
       hormigon_sin_aislacion: 1.48,
-      tabique_sin_aislacion: 1.50,
+      tabique_sin_aislacion: 1.5,
       adobe: 1.15,
       muro_aislacion_interior: 0.82,
-      muro_aislacion_exterior: 0.30
+      muro_aislacion_exterior: 0.3
     };
     let dMuro = muroBaseMap[input.materialMuro] ?? 1.35;
 
-    // Tabla 3 Manual CEV: deterioro de conductividad térmica por antigüedad en ladrillo y adobe
     if (input.materialMuro === "ladrillo_sin_aislacion" || input.materialMuro === "adobe") {
       if (input.antiguedad === "11_15") dMuro += 0.04;
-      if (input.antiguedad === "16_20") dMuro += 0.10;
+      if (input.antiguedad === "16_20") dMuro += 0.1;
       if (input.antiguedad === "21_mas") dMuro += 0.16;
     }
 
@@ -165,7 +235,7 @@
       debilidades.add("puente_termico_muro");
     }
 
-    // 3. Ventanas (U ponderado real con Tablas 4, 5 y 6 CEV, calibrado a ref OGUC 2007 = U 5.8)
+    // 4. Ventanas (Tablas 4, 5 y 6 Manual CEV)
     const vidrioInfo = U_VIDRIO[input.vidrio] || U_VIDRIO.monolitico;
     const marcoInfo = MARCO_DATA[input.marco] || MARCO_DATA.aluminio_sin_rpt;
     const uVentana = Number((marcoInfo.fm * vidrioInfo.u + (1 - marcoInfo.fm) * marcoInfo.u).toFixed(2));
@@ -177,15 +247,15 @@
     if (input.marco === "aluminio_sin_rpt" || input.marco === "acero") {
       debilidades.add("marco_metalico_frio");
     }
-    if (
-      input.cierreVentana === "corredera" ||
-      input.cierreVentana === "guillotina_antigua" ||
-      input.sienteChiflon
-    ) {
+
+    // P1-2: Separar infiltración confirmada (sienteChiflon) vs riesgo por tipo de cierre
+    if (input.sienteChiflon) {
       debilidades.add("infiltracion_ventanas");
+    } else if (input.cierreVentana === "corredera" || input.cierreVentana === "guillotina_antigua") {
+      debilidades.add("riesgo_infiltracion_ventanas");
     }
 
-    // 4. Puertas (Tabla 7 Manual CEV)
+    // 5. Puertas (P1-1: separar infiltración real por chiflón vs puerta de baja aislación)
     const uPuertaMap = {
       madera_solida: 1.7,
       madera_entablerada: 2.63,
@@ -194,31 +264,66 @@
     };
     const uPuerta = uPuertaMap[input.puerta] ?? 2.63;
     const dPuerta = (uPuerta / 2.8) * (input.sienteChiflon ? 1.3 : 0.85);
-    if (input.sienteChiflon || input.puerta !== "madera_solida") {
+
+    if (input.sienteChiflon) {
       debilidades.add("infiltracion_puerta");
     }
+    if (input.puerta !== "madera_solida") {
+      debilidades.add("puerta_poco_aislada");
+    }
 
-    // 5. Modulador Bioclimático Santiago (Orientación + FAV + FAR + Factor Solar)
+    // 6. Humedad / condensación confirmada (P1-12)
+    if (input.humedadCondensacion === true) {
+      debilidades.add("humedad_condensacion");
+    }
+
+    // 7. Modulador Bioclimático Santiago (Alero 3 niveles: completo / parcial / ninguno)
+    const alero = normalizeAleroValue(input.tieneAleroOToldo);
     let fInvierno = 1.0;
     let fVerano = 1.0;
 
     if (input.orientacionPrincipal === "norte") {
       fInvierno = input.nivelSombraEntorno === "muy_sombreado" ? 1.02 : 0.86;
-      fVerano = input.tieneAleroOToldo ? 0.88 : 1.04;
-      if (!input.tieneAleroOToldo && input.nivelSombraEntorno === "despejado") {
-        debilidades.add("falta_sombra_solar");
+      if (alero === "completo") {
+        fVerano = 0.88;
+      } else if (alero === "parcial") {
+        fVerano = 0.97;
+      } else {
+        fVerano = 1.05;
+        if (input.nivelSombraEntorno === "despejado") {
+          debilidades.add("falta_sombra_solar");
+        }
       }
     } else if (input.orientacionPrincipal === "poniente") {
       fInvierno = 1.0;
-      if (!input.tieneAleroOToldo && input.nivelSombraEntorno !== "muy_sombreado") {
-        const sobrecargaBase = vidrioInfo.fs > 0.8 ? 1.38 : 1.22;
-        fVerano = input.nivelSombraEntorno === "despejado" ? sobrecargaBase : sobrecargaBase - 0.1;
-        debilidades.add("sobrecalentamiento_poniente");
-        debilidades.add("falta_sombra_solar");
-      } else {
-        fVerano = input.nivelSombraEntorno === "despejado" ? 1.04 : 0.96;
+      if (alero === "completo") {
+        fVerano = input.nivelSombraEntorno === "despejado" ? 1.02 : 0.95;
         if (input.nivelSombraEntorno === "despejado") {
           debilidades.add("sobrecalentamiento_poniente");
+        }
+      } else if (alero === "parcial") {
+        const sobrecargaParcial = vidrioInfo.fs > 0.8 ? 1.26 : 1.15;
+        fVerano =
+          input.nivelSombraEntorno === "despejado"
+            ? sobrecargaParcial
+            : input.nivelSombraEntorno === "parcial"
+            ? sobrecargaParcial - 0.08
+            : 0.98;
+        if (input.nivelSombraEntorno !== "muy_sombreado") {
+          debilidades.add("sobrecalentamiento_poniente");
+          debilidades.add("falta_sombra_solar");
+        }
+      } else {
+        const sobrecargaBase = vidrioInfo.fs > 0.8 ? 1.38 : 1.22;
+        fVerano =
+          input.nivelSombraEntorno === "despejado"
+            ? sobrecargaBase
+            : input.nivelSombraEntorno === "parcial"
+            ? sobrecargaBase - 0.1
+            : 1.02;
+        if (input.nivelSombraEntorno !== "muy_sombreado") {
+          debilidades.add("sobrecalentamiento_poniente");
+          debilidades.add("falta_sombra_solar");
         }
       }
     } else if (input.orientacionPrincipal === "sur") {
@@ -228,13 +333,14 @@
     } else {
       // Oriente
       fInvierno = 0.96;
-      fVerano = input.nivelSombraEntorno === "despejado" && !input.tieneAleroOToldo ? 1.06 : 0.94;
+      fVerano = input.nivelSombraEntorno === "despejado" && alero === "ninguno" ? 1.06 : 0.95;
     }
 
-    // 6. Demanda Global ponderada con compacidad (Zona Térmica D: ~65% calefacción, ~35% enfriamiento)
-    const compacidad = FACTOR_COMPACIDAD[input.tipoVivienda] || 1.0;
+    // 8. Índice orientativo de desempeño (modelo simplificado 65% invierno / 35% verano)
+    const compacidad = FACTOR_COMPACIDAD[tv] || 1.0;
     const demandaBase =
-      (wTecho * dTecho + wMuro * dMuro + wVentana * dVentana + wPuerta * dPuerta) * compacidad;
+      (wTecho * dTecho + wPiso * dPiso + wMuro * dMuro + wVentana * dVentana + wPuerta * dPuerta) *
+      compacidad;
 
     const demandaInvierno = demandaBase * fInvierno;
     const demandaVerano = demandaBase * fVerano;
@@ -249,24 +355,52 @@
     const puntajeInvierno = toScore100(demandaInvierno);
     const puntajeVerano = toScore100(demandaVerano);
 
+    // P1-7: Nivel de certeza y rango de incertidumbre según cantidad de "No sé"
+    let nivelCerteza = "alta";
+    let rangoLetras = null;
+    if (estCount >= 4) {
+      nivelCerteza = "baja";
+      const pos = LETTERS_ORDER.indexOf(letraEstimada);
+      const mejor = LETTERS_ORDER[Math.max(1, pos - 1)];
+      const peor = LETTERS_ORDER[Math.min(LETTERS_ORDER.length - 1, pos + 1)];
+      rangoLetras = `${mejor} – ${peor}`;
+    } else if (estCount >= 1) {
+      nivelCerteza = "media";
+    }
+
+    const esComunaPrecordillera = COMUNAS_PRECORDILLERA_ZONA_H.includes(input.comuna);
+
     const resumenEjecutivo =
-      ahorroEstimadoPct < -10
-        ? "Tu vivienda presenta pérdidas térmicas importantes respecto al estándar base (OGUC 2007) de Santiago. Priorizar sellos de infiltración, control solar y aislación en puntos críticos generará un cambio inmediato."
+      nivelCerteza === "baja"
+        ? "Respondiste 'No sé' en varios puntos clave de tu envolvente. Este resultado es una aproximación preliminar con rango de incertidumbre: te sugerimos verificar esos datos básicos antes de invertir en obras mayores."
+        : ahorroEstimadoPct < -10
+        ? "Tu vivienda presenta pérdidas térmicas importantes respecto a la referencia base de Santiago. Atacar primero los puntos con menor puntaje generará la mayor mejora de confort."
         : ahorroEstimadoPct < 40
-        ? "Tu vivienda tiene un desempeño térmico intermedio (cercano al estándar base). Con medidas focalizadas de bajo costo y gestión solar puedes mejorar notoriamente tu confort y bajar tus cuentas."
-        : "Tu vivienda cuenta con una envolvente sólida para la Zona Térmica D (Santiago). Ya tienes resueltos los puntos más costosos; solo conviene optimizar detalles puntuales o climatización eficiente.";
+        ? "Tu vivienda tiene un desempeño térmico intermedio. Con medidas focalizadas en los puntos críticos detectados puedes mejorar notoriamente el confort en invierno y verano."
+        : "Tu vivienda cuenta con una envolvente sólida para la Zona Térmica D (Santiago). Ya tienes resueltos los puntos más costosos; solo conviene revisar detalles puntuales.";
 
     return {
       letraEstimada,
-      ahorroEstimadoPct,
+      rangoLetras,
+      nivelCerteza,
+      esComunaPrecordillera,
+      ahorroEstimadoPct, // Se mantiene el nombre de propiedad por compatibilidad BD; en UI se muestra como "Índice orientativo"
       puntajeInvierno,
       puntajeVerano,
       uVentanaEstimado: uVentana,
       desgloseComponentes: {
         techo: esTechoAdiabatico ? null : toScore100(dTecho),
+        piso: esPisoAdiabatico ? null : toScore100(dPiso),
         muros: toScore100(dMuro),
         ventanas: toScore100(dVentana),
         puertas: toScore100(dPuerta)
+      },
+      pesosComponentes: {
+        techo: wTecho,
+        piso: wPiso,
+        muros: wMuro,
+        ventanas: wVentana,
+        puertas: wPuerta
       },
       debilidades: Array.from(debilidades),
       resumenEjecutivo

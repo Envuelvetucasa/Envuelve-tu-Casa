@@ -1,90 +1,116 @@
 // =========================================================================
-// BANCO DE SOLUCIONES (CON REGLAS ANTI-REDUNDANCIA), TIPS, SUBSIDIOS Y DOCS
-// Iniciativa Envuelve tu Casa v1.2.0
+// BANCO DE SOLUCIONES v2.0 (ANTI-REDUNDANCIA, SIN EPS EXPUESTO, PISO, AC INVERTER)
+// Iniciativa Envuelve tu Casa
 // =========================================================================
 
 window.SOLUTIONS_CATALOG = {
   "meta": {
     "proyecto": "Iniciativa Envuelve tu Casa",
-    "version": "1.2.0",
-    "fecha_actualizacion": "2026-11-22",
+    "version": "2.0.0",
+    "fecha_actualizacion": "2026-11-23",
     "moneda": "CLP",
     "zona_termica": "D (Santiago urbano)",
-    "motor_compatible": "thermalEngine.js v2 (WeaknessTag + reglas de elegibilidad estrictas)",
-    "fuente_precios": "Burletes, guardapolvos y selladores: verificados en Sodimac.cl (nov 2026). Equipos Inverter y obras mayores: rangos referenciales en Santiago.",
-    "advertencia_precios": "Precios referenciales en CLP con IVA en Santiago. Pueden variar por tienda y temporada. En medidas de alto impacto, cotiza siempre con 2 o 3 maestros o empresas.",
-    "proxima_revision_precios": "2027-05-01",
-    "regla_bajo_costo": "categoria = bajo_costo cuando costo.max_clp <= 30000 por unidad (ventana, puerta, kit, rollo o paño).",
-    "aviso_legal_ui": "Orientación preliminar. No reemplaza una evaluación profesional ni una Calificación Energética oficial. No determina si calificas a un subsidio."
+    "motor_compatible": "thermalEngine.js v2.0",
+    "fuente_precios": "Burletes, guardapolvos y selladores: verificados en Sodimac.cl (nov 2026). Obras mayores y equipos: rangos referenciales en Santiago.",
+    "advertencia_precios": "Precios referenciales en CLP con IVA en Santiago. En medidas económicas el monto es POR UNIDAD (puerta, ventana, rollo o paño), no por la vivienda completa. En obras mayores, cotiza con 2 o 3 maestros o empresas.",
+    "aviso_legal_ui": "Orientación preliminar basada en un modelo simplificado (65% invierno / 35% verano). No reemplaza una Calificación Energética de Viviendas (CEV) oficial del MINVU ni garantiza montos exactos de ahorro en cuentas."
   },
   "tags": [
     {
       "tag": "fuga_techo",
-      "etiqueta_usuario": "Pierdes calor por el techo",
-      "explicacion": "El techo es por donde más calor se escapa en invierno y por donde más calor entra en verano.",
+      "etiqueta_usuario": "Pérdida de calor por el techo",
+      "explicacion": "El techo es uno de los puntos donde más calor escapa en invierno y por donde más calor entra en verano.",
       "elemento": "techo",
       "temporada_critica": "ambas"
     },
     {
+      "tag": "fuga_piso",
+      "etiqueta_usuario": "Pérdida de calor por el piso",
+      "explicacion": "Los pisos sobre estacionamientos abiertos, pilotes o radier sin aislación enfrían la vivienda desde abajo en invierno.",
+      "elemento": "piso",
+      "temporada_critica": "invierno"
+    },
+    {
       "tag": "muro_sin_aislacion",
-      "etiqueta_usuario": "Tus muros no tienen aislación",
-      "explicacion": "Los muros de ladrillo, hormigón, tabique o adobe sin aislación dejan pasar el frío de afuera y enfrían las piezas.",
+      "etiqueta_usuario": "Muros exteriores sin aislación",
+      "explicacion": "Los muros de ladrillo, hormigón, tabique o adobe sin aislación dejan pasar el frío exterior y enfrían las habitaciones.",
       "elemento": "muros",
       "temporada_critica": "invierno"
     },
     {
       "tag": "puente_termico_muro",
-      "etiqueta_usuario": "Puntos fríos en los muros",
-      "explicacion": "Esquinas, pilares y vigas se enfrían más que el resto del muro y pueden juntar humedad u hongos, incluso si el muro tiene aislación por dentro.",
+      "etiqueta_usuario": "Posibles puntos fríos en bordes de muros",
+      "explicacion": "Incluso con aislación interior, esquinas, pilares y losas pueden quedar más fríos que el resto del muro.",
       "elemento": "muros",
       "temporada_critica": "invierno"
     },
     {
       "tag": "vidrio_simple",
       "etiqueta_usuario": "Ventanas con vidrio simple",
-      "explicacion": "Un vidrio simple deja pasar mucho más calor que un termopanel: enfría la pieza en invierno y la recalienta en verano.",
+      "explicacion": "Un vidrio simple (U ≈ 5,8 W/m²K) deja pasar cerca del doble de calor que un termopanel.",
       "elemento": "ventanas",
       "temporada_critica": "ambas"
     },
     {
       "tag": "marco_metalico_frio",
-      "etiqueta_usuario": "Marcos de aluminio o fierro",
-      "explicacion": "El metal conduce el frío y el calor con mucha facilidad. Por eso los marcos se sienten helados y se llenan de gotitas de agua en invierno.",
+      "etiqueta_usuario": "Marcos de aluminio común o fierro",
+      "explicacion": "El metal sin corte térmico conduce el frío y el calor con facilidad y favorece condensación en los bordes.",
       "elemento": "ventanas",
       "temporada_critica": "invierno"
     },
     {
       "tag": "infiltracion_ventanas",
-      "etiqueta_usuario": "Entra aire por las ventanas",
-      "explicacion": "Ventanas correderas, antiguas o mal selladas dejan pasar chiflones aunque estén cerradas.",
+      "etiqueta_usuario": "Chiflones confirmados en ventanas",
+      "explicacion": "Indicaste que entra aire frío por las rendijas, lo que enfría rápidamente los recintos.",
+      "elemento": "ventanas",
+      "temporada_critica": "invierno"
+    },
+    {
+      "tag": "riesgo_infiltracion_ventanas",
+      "etiqueta_usuario": "Riesgo de infiltración en ventanas correderas o antiguas",
+      "explicacion": "Aunque hoy no sientas chiflones, este tipo de cierre suele desgastar felpas con el tiempo; conviene inspeccionarlo antes de comprar sellos.",
       "elemento": "ventanas",
       "temporada_critica": "invierno"
     },
     {
       "tag": "infiltracion_puerta",
-      "etiqueta_usuario": "Entra aire por la puerta de entrada",
-      "explicacion": "Puertas huecas, con vidrio o con rendijas en el borde y bajo la hoja dejan entrar frío, polvo y ruido.",
+      "etiqueta_usuario": "Chiflones confirmados en puerta exterior",
+      "explicacion": "Entra aire frío por el marco o por debajo de la hoja, generando corrientes heladas a ras de piso.",
       "elemento": "puertas",
       "temporada_critica": "invierno"
     },
     {
+      "tag": "puerta_poco_aislada",
+      "etiqueta_usuario": "Puerta exterior de baja aislación",
+      "explicacion": "Una puerta hueca, metálica o con vidrio simple conduce más frío que una de madera sólida, aunque esté bien sellada.",
+      "elemento": "puertas",
+      "temporada_critica": "invierno"
+    },
+    {
+      "tag": "humedad_condensacion",
+      "etiqueta_usuario": "Humedad, condensación o moho reportado",
+      "explicacion": "Reportaste agua en vidrios o manchas de humedad/hongos en invierno; requiere ventilar a diario y tratar la superficie afectada.",
+      "elemento": "muros",
+      "temporada_critica": "invierno"
+    },
+    {
       "tag": "sobrecalentamiento_poniente",
-      "etiqueta_usuario": "Calor fuerte en las tardes de verano",
-      "explicacion": "El sol de la tarde pega directo en las ventanas que miran al poniente y calienta la casa justo cuando más cuesta enfriarla.",
+      "etiqueta_usuario": "Sobrecalentamiento por sol de tarde (Poniente)",
+      "explicacion": "El sol bajo de la tarde pega directo al poniente en verano y eleva la temperatura interior.",
       "elemento": "entorno_solar",
       "temporada_critica": "verano"
     },
     {
       "tag": "frio_orientacion_sur",
-      "etiqueta_usuario": "Piezas del lado sur, frías y con poco sol",
-      "explicacion": "La fachada sur casi no recibe sol en invierno, así que las piezas de ese lado se mantienen frías y húmedas.",
+      "etiqueta_usuario": "Recintos al Sur con poca ganancia solar",
+      "explicacion": "La fachada sur casi no recibe sol directo en invierno, manteniéndose más fría que el resto de la vivienda.",
       "elemento": "entorno_solar",
       "temporada_critica": "invierno"
     },
     {
       "tag": "falta_sombra_solar",
-      "etiqueta_usuario": "Sin sombra frente al sol de verano",
-      "explicacion": "Sin aleros, toldos, árboles u otra sombra, el sol entra directo por los vidrios y sube la temperatura interior.",
+      "etiqueta_usuario": "Falta de protección solar exterior efectiva",
+      "explicacion": "Sin un alero o sombra que realmente tape el vidrio en verano, la radiación solar directa recalienta los recintos.",
       "elemento": "entorno_solar",
       "temporada_critica": "verano"
     }
@@ -98,6 +124,11 @@ window.SOLUTIONS_CATALOG = {
       "tags": [
         "infiltracion_puerta"
       ],
+      "requiere_alguno": {
+        "sienteChiflon": [
+          true
+        ]
+      },
       "elemento": "puertas",
       "impacto": "medio",
       "impacto_termico_1_10": 5,
@@ -108,6 +139,8 @@ window.SOLUTIONS_CATALOG = {
         "max_clp": 12000,
         "tipico_clp": 6000,
         "unidad": "por puerta",
+        "precio_unitario_texto": "$3.500 – $12.000 por puerta",
+        "total_referencial_texto": "1 puerta de entrada (~5 m de burlete): ~$6.000",
         "caso_tipico": "Puerta de entrada estándar, unos 5 metros de burlete de espuma o goma"
       },
       "dificultad": "facil",
@@ -116,12 +149,13 @@ window.SOLUTIONS_CATALOG = {
       "aplica_a": [
         "casa_aislada",
         "casa_pareada",
+        "casa_continua",
         "depto_ultimo_piso",
         "depto_intermedio",
         "depto_primer_piso"
       ],
-      "problema_que_ataca": "Corta el aire frío que entra por las rendijas entre la puerta y su marco.",
-      "tip_practico": "Limpia el marco con un paño seco antes de pegar. Pega el burlete por el marco, no por la hoja, y cierra la puerta con suavidad para que se asiente. Si al cerrar cuesta mucho, usa uno más delgado.",
+      "problema_que_ataca": "Corta el aire frío que entra por las rendijas confirmadas entre la puerta y su marco.",
+      "tip_practico": "Limpia el marco con un paño seco antes de pegar. Pega el burlete por el marco, no por la hoja, y cierra suavemente para que se asiente.",
       "precaucion": null,
       "donde_comprar": "Sodimac, Easy, ferreterías de barrio",
       "subsidio_ds27": "no"
@@ -134,6 +168,11 @@ window.SOLUTIONS_CATALOG = {
       "tags": [
         "infiltracion_puerta"
       ],
+      "requiere_alguno": {
+        "sienteChiflon": [
+          true
+        ]
+      },
       "elemento": "puertas",
       "impacto": "medio",
       "impacto_termico_1_10": 4,
@@ -144,6 +183,8 @@ window.SOLUTIONS_CATALOG = {
         "max_clp": 5000,
         "tipico_clp": 3500,
         "unidad": "por puerta",
+        "precio_unitario_texto": "$2.000 – $5.000 por puerta",
+        "total_referencial_texto": "1 puerta de entrada (1 tira de 1 m): ~$3.500",
         "caso_tipico": "Guardapolvo de cepillo o tira de goma de 1 metro"
       },
       "dificultad": "facil",
@@ -152,12 +193,13 @@ window.SOLUTIONS_CATALOG = {
       "aplica_a": [
         "casa_aislada",
         "casa_pareada",
+        "casa_continua",
         "depto_ultimo_piso",
         "depto_intermedio",
         "depto_primer_piso"
       ],
-      "problema_que_ataca": "Tapa el espacio entre el borde inferior de la puerta y el piso, por donde entra el chiflón más fuerte.",
-      "tip_practico": "Mide el ancho de la hoja y corta la tira con tijera o sierra. Elige el tipo de cepillo si el piso es irregular y el de goma si es liso.",
+      "problema_que_ataca": "Tapa el espacio entre el borde inferior de la puerta y el piso por donde entra el chiflón.",
+      "tip_practico": "Mide el ancho de la hoja y corta la tira. Usa cepillo si el piso es irregular o goma si es liso.",
       "precaucion": null,
       "donde_comprar": "Sodimac, Easy, ferreterías de barrio",
       "subsidio_ds27": "no"
@@ -168,7 +210,8 @@ window.SOLUTIONS_CATALOG = {
       "descripcion_corta": "Burlete de espuma o felpa en los bordes de la ventana. Reduce el aire que se cuela en ventanas correderas o antiguas.",
       "categoria": "bajo_costo",
       "tags": [
-        "infiltracion_ventanas"
+        "infiltracion_ventanas",
+        "riesgo_infiltracion_ventanas"
       ],
       "excluir_si": {
         "cierreVentana": [
@@ -185,6 +228,8 @@ window.SOLUTIONS_CATALOG = {
         "max_clp": 8000,
         "tipico_clp": 4000,
         "unidad": "por ventana",
+        "precio_unitario_texto": "$1.500 – $8.000 por ventana",
+        "total_referencial_texto": "1 ventana prioritaria: ~$4.000 (4 ventanas: ~$16.000)",
         "caso_tipico": "Ventana mediana de 1,2 x 1,2 m, 2 o 3 rollos de burlete"
       },
       "dificultad": "facil",
@@ -193,12 +238,13 @@ window.SOLUTIONS_CATALOG = {
       "aplica_a": [
         "casa_aislada",
         "casa_pareada",
+        "casa_continua",
         "depto_ultimo_piso",
         "depto_intermedio",
         "depto_primer_piso"
       ],
-      "problema_que_ataca": "Reduce el aire que se cuela por los bordes de ventanas correderas, de guillotina o con el burlete gastado.",
-      "tip_practico": "En ventanas correderas usa burlete de felpa (cepillo) en los rieles. En ventanas que se abren hacia adentro usa espuma adhesiva en el marco. Prueba con la mano mojada en un día de viento para encontrar las rendijas.",
+      "problema_que_ataca": "Reduce la entrada de aire por los rieles o bordes de ventanas móviles con sellos gastados.",
+      "tip_practico": "En ventanas correderas usa burlete de felpa en los rieles; en ventanas de abatir usa espuma adhesiva en el marco. Si hoy no sientes chiflones, haz primero la prueba de la mano mojada en un día de viento antes de comprar.",
       "precaucion": null,
       "donde_comprar": "Sodimac, Easy, ferreterías de barrio",
       "subsidio_ds27": "no"
@@ -206,25 +252,15 @@ window.SOLUTIONS_CATALOG = {
     {
       "id": "B04_sellador_silicona_perimetral",
       "nombre": "Sellado con silicona o sellador acrílico alrededor del marco",
-      "descripcion_corta": "Silicona o sellador acrílico alrededor del marco. Cierra la grieta entre el marco de la ventana o puerta y el muro.",
+      "descripcion_corta": "Silicona o sellador acrílico alrededor del marco. Cierra grietas confirmadas entre el marco y el muro.",
       "categoria": "bajo_costo",
       "tags": [
         "infiltracion_ventanas",
-        "marco_metalico_frio",
         "infiltracion_puerta"
       ],
       "requiere_alguno": {
         "sienteChiflon": [
           true
-        ],
-        "marco": [
-          "aluminio_sin_rpt",
-          "acero"
-        ],
-        "antiguedad": [
-          "11_15",
-          "16_20",
-          "21_mas"
         ]
       },
       "elemento": "ventanas",
@@ -236,7 +272,9 @@ window.SOLUTIONS_CATALOG = {
         "min_clp": 3000,
         "max_clp": 7000,
         "tipico_clp": 4500,
-        "unidad": "por cartucho (2 a 3 ventanas)",
+        "unidad": "por cartucho",
+        "precio_unitario_texto": "$3.000 – $7.000 por cartucho",
+        "total_referencial_texto": "1 cartucho rinde 2 a 3 ventanas: ~$4.500",
         "caso_tipico": "Cartucho de silicona o sellador acrílico pintable"
       },
       "dificultad": "media",
@@ -245,36 +283,29 @@ window.SOLUTIONS_CATALOG = {
       "aplica_a": [
         "casa_aislada",
         "casa_pareada",
+        "casa_continua",
         "depto_ultimo_piso",
         "depto_intermedio",
         "depto_primer_piso"
       ],
-      "problema_que_ataca": "Cierra la grieta entre el marco de la ventana o puerta y el muro, que deja pasar aire frío y humedad.",
-      "tip_practico": "Raspa el sellador viejo, limpia y seca bien. Aplica un cordón parejo por el contorno del marco y alisa con el dedo mojado en agua con jabón. Usa acrílico si vas a pintar encima y silicona en zonas con agua.",
-      "precaucion": "No selles los orificios de drenaje del riel de la ventana ni las rejillas de ventilación de la cocina o el baño.",
+      "problema_que_ataca": "Cierra grietas o uniones abiertas entre el marco de puertas/ventanas y el muro cuando existen filtraciones de aire.",
+      "tip_practico": "Raspa el sellador viejo, limpia y seca bien. Aplica un cordón parejo donde detectes entrada de aire y alisa con agua jabonosa.",
+      "precaucion": "No selles los orificios de drenaje del riel inferior ni las rejillas de ventilación de cocina o baño.",
       "donde_comprar": "Sodimac, Easy, ferreterías de barrio",
       "subsidio_ds27": "no"
     },
     {
       "id": "B05_espuma_pu_rendijas",
-      "nombre": "Espuma de poliuretano para rendijas y cajón de persiana",
-      "descripcion_corta": "Espuma de poliuretano para huecos grandes (cajón de persiana, pasadas, uniones). Sella lo que el burlete no alcanza.",
+      "nombre": "Espuma de poliuretano para huecos grandes y cajón de persiana",
+      "descripcion_corta": "Espuma de poliuretano para huecos grandes (cajón de persiana, pasadas, uniones) donde el burlete no alcanza.",
       "categoria": "bajo_costo",
       "tags": [
         "infiltracion_ventanas",
-        "infiltracion_puerta",
-        "puente_termico_muro"
+        "infiltracion_puerta"
       ],
       "requiere_alguno": {
         "sienteChiflon": [
           true
-        ],
-        "antiguedad": [
-          "16_20",
-          "21_mas"
-        ],
-        "materialMuro": [
-          "muro_aislacion_interior"
         ]
       },
       "elemento": "ventanas",
@@ -287,6 +318,8 @@ window.SOLUTIONS_CATALOG = {
         "max_clp": 9000,
         "tipico_clp": 5500,
         "unidad": "por lata",
+        "precio_unitario_texto": "$3.500 – $9.000 por lata",
+        "total_referencial_texto": "1 lata para varios huecos/cajones: ~$5.500",
         "caso_tipico": "Una lata de espuma expansiva para sellar cajón de persiana y uniones marco-muro"
       },
       "dificultad": "media",
@@ -295,20 +328,21 @@ window.SOLUTIONS_CATALOG = {
       "aplica_a": [
         "casa_aislada",
         "casa_pareada",
+        "casa_continua",
         "depto_ultimo_piso",
         "depto_intermedio",
         "depto_primer_piso"
       ],
-      "problema_que_ataca": "Rellena huecos grandes que el burlete no alcanza: cajones de persiana, pasadas de cañerías y uniones entre marco y muro.",
-      "tip_practico": "Aplica en poca cantidad, porque la espuma crece. Espera que seque completo (unas horas) y recorta el sobrante con cuchillo. Cúbrela con sellador o pintura, ya que el sol la deteriora.",
-      "precaucion": "Usa guantes y ventila: la espuma fresca es irritante y pega mucho en la piel.",
+      "problema_que_ataca": "Rellena huecos grandes confirmados que el burlete no alcanza: cajones de persiana, pasadas de cañerías y separaciones marco-muro.",
+      "tip_practico": "Aplica poca cantidad porque se expande. Espera que seque, recorta el sobrante y cúbrela con sellador o pintura para protegerla del sol.",
+      "precaucion": "Usa guantes y ventila: la espuma fresca es irritante y se adhiere con fuerza a la piel.",
       "donde_comprar": "Sodimac, Easy, ferreterías de barrio",
       "subsidio_ds27": "no"
     },
     {
       "id": "B06_sellar_escotilla_y_pasadas_cielo",
-      "nombre": "Sellar la escotilla del entretecho y las pasadas del cielo",
-      "descripcion_corta": "Burlete y plancha de poliestireno sobre la escotilla, y espuma en las pasadas del cielo. Evita que el calor suba al entretecho.",
+      "nombre": "Sellar la escotilla del entretecho y pasadas del cielo",
+      "descripcion_corta": "Burlete en la escotilla y sello en pasadas del cielo. Etapa 1 económica para frenar fugas hacia el entretecho.",
       "categoria": "bajo_costo",
       "tags": [
         "fuga_techo"
@@ -319,6 +353,8 @@ window.SOLUTIONS_CATALOG = {
           "aislacion_alta"
         ]
       },
+      "grupo_alternativa": "techo_etapas",
+      "etiqueta_alternativa": "Etapa 1 (sellado inicial) — complementaria a aislar el cielo",
       "elemento": "techo",
       "impacto": "medio",
       "impacto_termico_1_10": 4,
@@ -329,25 +365,28 @@ window.SOLUTIONS_CATALOG = {
         "max_clp": 15000,
         "tipico_clp": 9000,
         "unidad": "por vivienda",
-        "caso_tipico": "Burlete en el borde de la escotilla, plancha de poliestireno sobre ella y espuma en pasadas de cañerías y cables"
+        "precio_unitario_texto": "$5.000 – $15.000 por vivienda",
+        "total_referencial_texto": "1 escotilla + pasadas del cielo: ~$9.000",
+        "caso_tipico": "Burlete en el marco de la escotilla y sello de pasadas de cañerías en el cielo"
       },
       "dificultad": "media",
       "hazlo_tu_mismo": true,
       "apto_arrendatario": "con_permiso",
       "aplica_a": [
         "casa_aislada",
-        "casa_pareada"
+        "casa_pareada",
+        "casa_continua"
       ],
-      "problema_que_ataca": "Evita que el aire caliente suba al entretecho en invierno por la tapa de la escotilla y por los huecos del cielo.",
-      "tip_practico": "Pega burlete en el marco de la escotilla y apoya encima una plancha de poliestireno del mismo tamaño que la tapa. Sella con espuma el contorno de cañerías y cables que atraviesan el cielo.",
-      "precaucion": "No cubras con aislante focos embutidos ni cajas eléctricas que no estén preparados para eso: se pueden recalentar. Si dudas, déjalos libres.",
+      "problema_que_ataca": "Evita que el aire caliente se escape hacia el entretecho por la tapa de acceso y rendijas del cielo.",
+      "tip_practico": "Pega burlete en el marco de la tapa y coloca encima una capa de lana mineral (material no combustible) sujeta a la tapa.",
+      "precaucion": "No cubras focos embutidos ni cajas eléctricas con aislante para evitar sobrecalentamiento.",
       "donde_comprar": "Sodimac, Easy, ferreterías de barrio",
       "subsidio_ds27": "no"
     },
     {
       "id": "B07_film_termico_ventana",
-      "nombre": "Kit de film aislante termorretráctil para ventanas",
-      "descripcion_corta": "Film plástico termorretráctil pegado al marco, que deja una capa de aire quieto frente al vidrio simple. Se instala en otoño.",
+      "nombre": "Kit de film aislante termorretráctil para ventanas (invierno)",
+      "descripcion_corta": "Film plástico transparente pegado al marco que crea una cámara de aire quieto frente al vidrio simple.",
       "categoria": "bajo_costo",
       "tags": [
         "vidrio_simple"
@@ -359,6 +398,8 @@ window.SOLUTIONS_CATALOG = {
           "dvh_alto"
         ]
       },
+      "grupo_alternativa": "film_ventana",
+      "etiqueta_alternativa": "Alternativa para invierno (no combinar con film solar en el mismo vidrio)",
       "elemento": "ventanas",
       "impacto": "medio",
       "impacto_termico_1_10": 5,
@@ -369,6 +410,8 @@ window.SOLUTIONS_CATALOG = {
         "max_clp": 15000,
         "tipico_clp": 9000,
         "unidad": "por ventana",
+        "precio_unitario_texto": "$6.000 – $15.000 por ventana",
+        "total_referencial_texto": "1 ventana prioritaria: ~$9.000 (3 ventanas: ~$27.000)",
         "caso_tipico": "Kit de film plástico con cinta doble contacto, para ventana de 1,2 x 1,2 m"
       },
       "dificultad": "media",
@@ -377,20 +420,21 @@ window.SOLUTIONS_CATALOG = {
       "aplica_a": [
         "casa_aislada",
         "casa_pareada",
+        "casa_continua",
         "depto_ultimo_piso",
         "depto_intermedio",
         "depto_primer_piso"
       ],
-      "problema_que_ataca": "Crea una capa de aire quieto frente al vidrio simple, frenando el frío y el chiflón sin cambiar la ventana.",
-      "tip_practico": "Pega la cinta por el interior del marco, estira el film y dale calor con secador de pelo para que quede tenso y transparente. Se instala en otoño y se retira en primavera.",
-      "precaucion": "No cubras ventanas que sean salida de emergencia o que necesites abrir seguido. Antes de retirar, despega la cinta despacio para no dañar la pintura.",
+      "problema_que_ataca": "Crea una cámara de aire quieto frente al vidrio simple, frenando la pérdida de calor en invierno sin cambiar la ventana.",
+      "tip_practico": "Pega la cinta por el interior del marco, estira el film y dale calor con secador de pelo para tensarlo. Se instala en otoño y se retira en primavera.",
+      "precaucion": "No cubras ventanas que sean salida de emergencia o que necesites abrir diariamente para ventilar.",
       "donde_comprar": "Sodimac, Easy, ferreterías de barrio",
       "subsidio_ds27": "no"
     },
     {
       "id": "B08_cortinas_termicas",
       "nombre": "Cortinas térmicas o con forro blackout",
-      "descripcion_corta": "Cortinas con forro térmico o blackout. Guardan el calor de noche en invierno y frenan el sol de la tarde en verano.",
+      "descripcion_corta": "Cortinas gruesas con respaldo térmico. Guardan calor de noche en invierno y frenan el sol en verano.",
       "categoria": "bajo_costo",
       "tags": [
         "vidrio_simple",
@@ -409,6 +453,8 @@ window.SOLUTIONS_CATALOG = {
         "max_clp": 29000,
         "tipico_clp": 20000,
         "unidad": "por ventana",
+        "precio_unitario_texto": "$12.000 – $29.000 por ventana",
+        "total_referencial_texto": "1 ventana prioritaria: ~$20.000 (3 ventanas: ~$60.000)",
         "caso_tipico": "Cortina con forro térmico o blackout, de largo hasta el piso"
       },
       "dificultad": "facil",
@@ -417,20 +463,21 @@ window.SOLUTIONS_CATALOG = {
       "aplica_a": [
         "casa_aislada",
         "casa_pareada",
+        "casa_continua",
         "depto_ultimo_piso",
         "depto_intermedio",
         "depto_primer_piso"
       ],
-      "problema_que_ataca": "Pone una barrera extra frente al vidrio: guarda el calor de noche en invierno y frena el sol de la tarde en verano.",
-      "tip_practico": "Elige una cortina más ancha que la ventana (unos 15 cm por lado) y que llegue casi al piso. En invierno ciérrala al atardecer. En verano ciérrala desde el mediodía en ventanas al poniente, con el lado claro hacia afuera.",
+      "problema_que_ataca": "Agrega una barrera textil frente al vidrio y al marco metálico frío: retiene calor en noches de invierno y frena sol de tarde en verano.",
+      "tip_practico": "Elige una cortina 15 cm más ancha que la ventana por lado. En invierno ábrela con sol y ciérrala al atardecer; en verano ciérrala al poniente desde el mediodía con el lado claro hacia afuera.",
       "precaucion": null,
       "donde_comprar": "Sodimac, Easy, tiendas de telas y hogar",
       "subsidio_ds27": "no"
     },
     {
       "id": "B09_film_control_solar",
-      "nombre": "Film reflectante de control solar (para vidrio simple)",
-      "descripcion_corta": "Film reflectante en el vidrio simple que rebota parte del sol de la tarde. Ideal para ventanas al poniente.",
+      "nombre": "Film reflectante de control solar (solo vidrio simple al Poniente/Oriente)",
+      "descripcion_corta": "Film reflectante en el vidrio simple que rebota el sol de tarde en verano. No recomendado en fachadas al Norte.",
       "categoria": "bajo_costo",
       "tags": [
         "sobrecalentamiento_poniente",
@@ -442,9 +489,12 @@ window.SOLUTIONS_CATALOG = {
           "dvh_alto"
         ],
         "orientacionPrincipal": [
+          "norte",
           "sur"
         ]
       },
+      "grupo_alternativa": "film_ventana",
+      "etiqueta_alternativa": "Alternativa para verano al Poniente (no usar en ventanas al Norte)",
       "elemento": "ventanas",
       "impacto": "alto",
       "impacto_termico_1_10": 6,
@@ -455,7 +505,9 @@ window.SOLUTIONS_CATALOG = {
         "max_clp": 25000,
         "tipico_clp": 15000,
         "unidad": "por ventana",
-        "caso_tipico": "Film adhesivo reflectante o electrostático, ventana de 1,2 x 1,2 m"
+        "precio_unitario_texto": "$8.000 – $25.000 por ventana",
+        "total_referencial_texto": "1 ventana al poniente: ~$15.000 (2 ventanas: ~$30.000)",
+        "caso_tipico": "Film adhesivo o electrostático removible, ventana de 1,2 x 1,2 m"
       },
       "dificultad": "media",
       "hazlo_tu_mismo": true,
@@ -463,20 +515,21 @@ window.SOLUTIONS_CATALOG = {
       "aplica_a": [
         "casa_aislada",
         "casa_pareada",
+        "casa_continua",
         "depto_ultimo_piso",
         "depto_intermedio",
         "depto_primer_piso"
       ],
-      "problema_que_ataca": "Rebota parte del sol de la tarde antes de que atraviese el vidrio simple y caliente la pieza.",
-      "tip_practico": "Aplícalo con agua jabonosa y una espátula blanda para evitar burbujas. Parte por las ventanas al poniente. Elige film removible si arriendas.",
-      "precaucion": "No apliques láminas reflectantes adhesivas sobre termopanel (DVH), porque el calor atrapado entre vidrios puede quebrar el cristal. Un film oscuro también quita sol en invierno.",
+      "problema_que_ataca": "Rebota parte del sol intenso de la tarde antes de que atraviese el vidrio simple y sobrecaliente la pieza.",
+      "tip_practico": "Aplícalo con agua jabonosa y espátula blanda solo en ventanas al poniente. Prefiere film electrostático removible si arriendas.",
+      "precaucion": "No apliques láminas reflectantes sobre termopanel (DVH) por riesgo de rotura térmica, ni en ventanas al Norte porque quitan el sol gratuito del invierno.",
       "donde_comprar": "Sodimac, Easy, tiendas de vidrios y ferreterías",
       "subsidio_ds27": "no"
     },
     {
       "id": "B10_malla_raschel_sombra",
-      "nombre": "Malla raschel o toldo liviano por fuera de la ventana",
-      "descripcion_corta": "Malla raschel puesta por fuera de la ventana. Da sombra antes de que el sol toque el vidrio y se puede sacar en invierno.",
+      "nombre": "Malla raschel o toldo liviano exterior (Poniente)",
+      "descripcion_corta": "Malla raschel removible por fuera de la ventana al poniente. Detiene el sol antes de que toque el vidrio.",
       "categoria": "bajo_costo",
       "tags": [
         "sobrecalentamiento_poniente",
@@ -484,15 +537,18 @@ window.SOLUTIONS_CATALOG = {
       ],
       "excluir_si": {
         "tieneAleroOToldo": [
-          true
+          "completo"
         ],
         "nivelSombraEntorno": [
           "muy_sombreado"
         ],
         "orientacionPrincipal": [
+          "norte",
           "sur"
         ]
       },
+      "grupo_alternativa": "sombra_exterior",
+      "etiqueta_alternativa": "Alternativa económica removible (elige entre malla raschel, enredadera o toldo)",
       "elemento": "entorno_solar",
       "impacto": "alto",
       "impacto_termico_1_10": 6,
@@ -502,8 +558,10 @@ window.SOLUTIONS_CATALOG = {
         "min_clp": 6000,
         "max_clp": 25000,
         "tipico_clp": 12000,
-        "unidad": "por ventana o paño 2x2 m",
-        "caso_tipico": "Malla raschel de 80% de sombra con ganchos o argollas, fijada sobre la ventana poniente"
+        "unidad": "por paño 2x2 m",
+        "precio_unitario_texto": "$6.000 – $25.000 por paño (2 x 2 m)",
+        "total_referencial_texto": "1 paño para ventana/balcón poniente: ~$12.000",
+        "caso_tipico": "Malla raschel de 80% sombra con ganchos removibles en fachada poniente"
       },
       "dificultad": "media",
       "hazlo_tu_mismo": true,
@@ -511,28 +569,33 @@ window.SOLUTIONS_CATALOG = {
       "aplica_a": [
         "casa_aislada",
         "casa_pareada",
+        "casa_continua",
         "depto_ultimo_piso",
         "depto_intermedio",
         "depto_primer_piso"
       ],
-      "problema_que_ataca": "Sombrea el vidrio desde afuera, que es la forma más efectiva de evitar que el sol caliente la pieza.",
-      "tip_practico": "Instálala con inclinación y a unos 20 cm del vidrio para que circule el aire. Se puede sacar en invierno para dejar entrar el sol.",
-      "precaucion": "En balcones de edificio pide permiso a la administración y fija bien la malla: el viento de la tarde la puede soltar.",
+      "problema_que_ataca": "Sombrea el vidrio desde afuera, evitando el efecto invernadero durante las tardes calurosas de verano.",
+      "tip_practico": "Instálala separada unos 20 cm del vidrio para que circule el aire y retírala en invierno.",
+      "precaucion": "En balcones de edificios pide autorización a la administración y asegúrala bien frente a ráfagas de viento.",
       "donde_comprar": "Sodimac, Easy, ferreterías y viveros",
       "subsidio_ds27": "no"
     },
     {
-      "id": "B11_eps_tras_muebles",
-      "nombre": "Planchas de poliestireno tras muebles en muros fríos",
-      "descripcion_corta": "Planchas de poliestireno pegadas al muro sin aislación tras closets o cabeceras. Aíslan los tramos de muro más fríos.",
+      "id": "B11_panel_reflectante_ignifugo",
+      "nombre": "Lámina reflectante térmica ignífuga detrás de estufas o radiadores",
+      "descripcion_corta": "Panel reflectante no combustible colocado entre calefactores de pared/radiadores y muros exteriores sin aislación.",
       "categoria": "bajo_costo",
       "tags": [
-        "muro_sin_aislacion"
+        "muro_sin_aislacion",
+        "frio_orientacion_sur"
       ],
       "excluir_si": {
         "materialMuro": [
-          "muro_aislacion_interior",
           "muro_aislacion_exterior"
+        ],
+        "calefaccionActual": [
+          "sin_calefaccion",
+          "aire_acondicionado_inverter"
         ]
       },
       "elemento": "muros",
@@ -542,39 +605,41 @@ window.SOLUTIONS_CATALOG = {
       "costo": {
         "simbolo": "$",
         "min_clp": 8000,
-        "max_clp": 25000,
-        "tipico_clp": 15000,
-        "unidad": "por mueble o paño de muro",
-        "caso_tipico": "5 o 6 planchas de poliestireno expandido de 20 mm, pegadas al muro tras un closet o cabecera"
+        "max_clp": 22000,
+        "tipico_clp": 14000,
+        "unidad": "por rollo (2 a 3 equipos)",
+        "precio_unitario_texto": "$8.000 – $22.000 por rollo",
+        "total_referencial_texto": "1 rollo para 2 o 3 estufas/radiadores: ~$14.000",
+        "caso_tipico": "Lámina reflectante de aluminio con respaldo mineral ignífugo detrás de radiador o panel mural"
       },
       "dificultad": "facil",
       "hazlo_tu_mismo": true,
-      "apto_arrendatario": "con_permiso",
+      "apto_arrendatario": "si",
       "aplica_a": [
         "casa_aislada",
         "casa_pareada",
+        "casa_continua",
         "depto_ultimo_piso",
         "depto_intermedio",
         "depto_primer_piso"
       ],
-      "problema_que_ataca": "Agrega una capa aislante en los tramos de muro exterior sin aislación donde duermes o te sientas.",
-      "tip_practico": "Corta las planchas a la medida del mueble y pégalas con adhesivo de montaje. Deja un espacio de 2 a 3 cm entre el mueble y la plancha para que circule el aire.",
-      "precaucion": "El poliestireno es inflamable: no lo dejes a la vista ni cerca de estufas. Tápalo siempre con el mueble, una tela gruesa o una plancha de yeso-cartón.",
-      "donde_comprar": "Sodimac, Easy, ferreterías con planchas de poliestireno",
+      "problema_que_ataca": "Devuelve hacia la habitación el calor que normalmente se pierde a través de muros exteriores fríos detrás de radiadores o estufas murales.",
+      "tip_practico": "Instala solo productos certificados para calor (lámina metálica con núcleo mineral o fibra de vidrio, nunca poliestireno expuesto) respetando las distancias de seguridad del fabricante.",
+      "precaucion": "Nunca uses poliestireno (plumavit) ni materiales inflamables expuestos en muros interiores o cerca de estufas.",
+      "donde_comprar": "Sodimac, Easy, tiendas de climatización",
       "subsidio_ds27": "no"
     },
     {
       "id": "B12_antihongos_y_ventilacion",
-      "nombre": "Limpieza antihongos y pintura antihongos en puntos fríos",
-      "descripcion_corta": "Limpieza y pintura antihongos en esquinas y muros fríos. Cuida la salud, pero no aísla: es un paliativo.",
+      "nombre": "Limpieza y pintura antihongos en zonas con humedad o moho",
+      "descripcion_corta": "Limpieza y pintura antihongos para las manchas de humedad reportadas. Cuida la salud; debe combinarse con ventilación diaria.",
       "categoria": "bajo_costo",
       "tags": [
-        "puente_termico_muro",
-        "frio_orientacion_sur"
+        "humedad_condensacion"
       ],
-      "excluir_si": {
-        "materialMuro": [
-          "muro_aislacion_exterior"
+      "requiere_alguno": {
+        "humedadCondensacion": [
+          true
         ]
       },
       "elemento": "muros",
@@ -587,7 +652,9 @@ window.SOLUTIONS_CATALOG = {
         "max_clp": 25000,
         "tipico_clp": 15000,
         "unidad": "por pieza afectada",
-        "caso_tipico": "Producto antihongos y un galón de pintura antihongos para una esquina o pared"
+        "precio_unitario_texto": "$8.000 – $25.000 por pieza",
+        "total_referencial_texto": "1 pieza afectada (limpiador + pintura): ~$15.000",
+        "caso_tipico": "Producto antihongos y pintura antihongos para una esquina o pared"
       },
       "dificultad": "facil",
       "hazlo_tu_mismo": true,
@@ -595,20 +662,21 @@ window.SOLUTIONS_CATALOG = {
       "aplica_a": [
         "casa_aislada",
         "casa_pareada",
+        "casa_continua",
         "depto_ultimo_piso",
         "depto_intermedio",
         "depto_primer_piso"
       ],
-      "problema_que_ataca": "Trata la humedad y el moho que aparecen en esquinas y muros fríos. Cuida tu salud, pero no aísla: es un paliativo.",
-      "tip_practico": "Limpia primero con el producto antihongos, deja secar bien y recién pinta. Combínalo siempre con ventilar unos 10 minutos al día para bajar la humedad.",
-      "precaucion": "Usa guantes y mascarilla, y ventila al aplicar. Si el moho vuelve rápido o cubre mucha superficie, hay un problema de aislación o de filtración que conviene revisar con un maestro.",
+      "problema_que_ataca": "Trata la humedad y el moho reportados en esquinas o muros fríos. Cuida la salud, aunque es un paliativo y no reemplaza aislar ni ventilar.",
+      "tip_practico": "Limpia primero con producto antihongos, deja secar bien y pinta. Ventila 10 minutos cada día al mediodía para bajar la humedad interior.",
+      "precaucion": "Usa guantes y mascarilla al aplicar. Si el moho reaparece rápido, revisa si existe filtración de agua o puente térmico severo.",
       "donde_comprar": "Sodimac, Easy, ferreterías de barrio",
       "subsidio_ds27": "no"
     },
     {
       "id": "B13_lana_mineral_parcial_cielo",
-      "nombre": "Rollos de lana mineral sobre el cielo de la pieza más usada",
-      "descripcion_corta": "Rollos de lana mineral sobre el cielo de la pieza más usada. Permite partir la aislación del techo de a poco.",
+      "nombre": "Rollos de lana mineral sobre el cielo de la pieza más fría",
+      "descripcion_corta": "Rollos de lana mineral sobre un dormitorio prioritario. Etapa económica para empezar a aislar un techo sin aislación.",
       "categoria": "bajo_costo",
       "tags": [
         "fuga_techo"
@@ -620,35 +688,40 @@ window.SOLUTIONS_CATALOG = {
           "aislacion_alta"
         ]
       },
+      "grupo_alternativa": "techo_etapas",
+      "etiqueta_alternativa": "Etapa parcial por habitación (alternativa gradual a aislar toda la casa)",
       "elemento": "techo",
       "impacto": "medio",
-      "impacto_termico_1_10": 5,
+      "impacto_termico_1_10": 6,
       "temporada": "ambas",
       "costo": {
         "simbolo": "$",
         "min_clp": 15000,
         "max_clp": 29000,
         "tipico_clp": 22000,
-        "unidad": "por rollo (revisar m²)",
-        "caso_tipico": "1 o 2 rollos de lana mineral o de vidrio sin papel, tendidos sobre un dormitorio"
+        "unidad": "por rollo (~7–12 m²)",
+        "precio_unitario_texto": "$15.000 – $29.000 por rollo",
+        "total_referencial_texto": "1 rollo (1 dormitorio ~10 m²): ~$22.000 (casa 40 m²: ~$88.000 en materiales)",
+        "caso_tipico": "1 rollo de lana mineral o de vidrio sin papel tendido sobre el dormitorio más frío"
       },
       "dificultad": "media",
       "hazlo_tu_mismo": true,
       "apto_arrendatario": "con_permiso",
       "aplica_a": [
         "casa_aislada",
-        "casa_pareada"
+        "casa_pareada",
+        "casa_continua"
       ],
-      "problema_que_ataca": "Es una forma de partir con la aislación del techo en la pieza que más usas, mientras juntas presupuesto para cubrir toda la casa.",
-      "tip_practico": "Tiende los rollos sin comprimirlos y sin dejar huecos entre ellos. Si el entretecho ya tiene aislación básica, agrega una segunda capa cruzada. Revisa en la etiqueta cuántos m² cubre cada rollo.",
-      "precaucion": "Usa guantes, mascarilla, lentes y ropa que cubra la piel. Camina solo sobre las vigas, nunca sobre el cielo falso. No tapes luminarias embutidas ni cajas de conexión eléctrica.",
+      "problema_que_ataca": "Permite comenzar a frenar la pérdida de calor por el techo en la pieza que más usas mientras juntas presupuesto para cubrir toda la casa.",
+      "tip_practico": "Tiende los rollos sin aplastarlos y bien juntos sin dejar rendijas. Revisa en la etiqueta cuántos m² cubre cada rollo.",
+      "precaucion": "Usa guantes, mascarilla y lentes. Pisa solo sobre vigas, nunca sobre el cielo falso, y no cubras focos embutidos ni cajas eléctricas.",
       "donde_comprar": "Sodimac, Easy",
       "subsidio_ds27": "consultar_ep"
     },
     {
       "id": "B14_enredadera_o_planta_caducifolia",
-      "nombre": "Enredadera o planta de hoja caduca frente a la ventana poniente",
-      "descripcion_corta": "Enredadera de hoja caduca frente a la ventana poniente. Da sombra en verano y deja pasar el sol en invierno.",
+      "nombre": "Enredadera de hoja caduca frente a fachada Poniente",
+      "descripcion_corta": "Enredadera realmente caducifolia (parra, glicinia o ampelopsis) frente al poniente: da sombra en verano y deja pasar el sol en invierno.",
       "categoria": "bajo_costo",
       "tags": [
         "falta_sombra_solar",
@@ -656,15 +729,18 @@ window.SOLUTIONS_CATALOG = {
       ],
       "excluir_si": {
         "tieneAleroOToldo": [
-          true
+          "completo"
         ],
         "nivelSombraEntorno": [
           "muy_sombreado"
         ],
         "orientacionPrincipal": [
+          "norte",
           "sur"
         ]
       },
+      "grupo_alternativa": "sombra_exterior",
+      "etiqueta_alternativa": "Alternativa natural (elige entre malla raschel, enredadera o toldo)",
       "elemento": "entorno_solar",
       "impacto": "medio",
       "impacto_termico_1_10": 3,
@@ -675,7 +751,9 @@ window.SOLUTIONS_CATALOG = {
         "max_clp": 30000,
         "tipico_clp": 15000,
         "unidad": "por planta con maceta y guía",
-        "caso_tipico": "Parra, jazmín del cabo u otra enredadera caducifolia con tutor o malla"
+        "precio_unitario_texto": "$5.000 – $30.000 por planta y guía",
+        "total_referencial_texto": "1 planta caducifolia con tutor/malla: ~$15.000",
+        "caso_tipico": "Parra (vid), glicinia (Wisteria sinensis) o ampelopsis (enredadera virgen) con tutor o malla"
       },
       "dificultad": "facil",
       "hazlo_tu_mismo": true,
@@ -683,24 +761,36 @@ window.SOLUTIONS_CATALOG = {
       "aplica_a": [
         "casa_aislada",
         "casa_pareada",
+        "casa_continua",
         "depto_ultimo_piso",
         "depto_intermedio",
         "depto_primer_piso"
       ],
-      "problema_que_ataca": "Da sombra natural en verano y pierde las hojas en invierno, dejando pasar el sol cuando se necesita.",
-      "tip_practico": "Elige una especie de hoja caduca (que bote las hojas en invierno) y de bajo consumo de agua. Pon la maceta cerca de la ventana poniente y guíala con una malla. Demora una o dos temporadas en cubrir.",
-      "precaucion": "Evita especies de hoja perenne frente a ventanas del norte: taparían el sol que necesitas en invierno.",
-      "donde_comprar": "Viveros, Sodimac, Easy",
+      "problema_que_ataca": "Genera sombra vegetal fresca en tardes de verano y bota sus hojas en invierno para no restar luz ni calor.",
+      "tip_practico": "Elige especies verdaderamente caducifolias adaptadas a Santiago como parra (vid), glicinia o ampelopsis (enredadera virgen). Demora 1 a 2 temporadas en cubrir bien.",
+      "precaucion": "Evita especies de hoja perenne (como hiedra o jazmín del cabo) frente a ventanas que necesiten sol en invierno.",
+      "donde_comprar": "Viveros locales, Sodimac, Easy",
       "subsidio_ds27": "no"
     },
     {
       "id": "B15_cortina_gruesa_puerta",
       "nombre": "Cortina gruesa sobre la puerta de entrada",
-      "descripcion_corta": "Cortina de tela gruesa sobre la puerta de entrada. Frena parte del chiflón sin tocar la puerta.",
+      "descripcion_corta": "Cortina de tela gruesa frente a la puerta de entrada. Frena parte del chiflón y del frío sin modificar la puerta.",
       "categoria": "bajo_costo",
       "tags": [
-        "infiltracion_puerta"
+        "infiltracion_puerta",
+        "puerta_poco_aislada"
       ],
+      "requiere_alguno": {
+        "sienteChiflon": [
+          true
+        ],
+        "puerta": [
+          "madera_entablerada",
+          "con_vidrio_parcial",
+          "metal_o_vidrio_total"
+        ]
+      },
       "elemento": "puertas",
       "impacto": "bajo",
       "impacto_termico_1_10": 3,
@@ -711,7 +801,9 @@ window.SOLUTIONS_CATALOG = {
         "max_clp": 20000,
         "tipico_clp": 12000,
         "unidad": "por puerta",
-        "caso_tipico": "Cortina de tela gruesa o con forro, con riel o tensor de resorte"
+        "precio_unitario_texto": "$8.000 – $20.000 por puerta",
+        "total_referencial_texto": "1 puerta de entrada (cortina + tensor): ~$12.000",
+        "caso_tipico": "Cortina de tela gruesa o con forro, con barra o tensor de resorte"
       },
       "dificultad": "facil",
       "hazlo_tu_mismo": true,
@@ -719,20 +811,64 @@ window.SOLUTIONS_CATALOG = {
       "aplica_a": [
         "casa_aislada",
         "casa_pareada",
+        "casa_continua",
         "depto_ultimo_piso",
         "depto_intermedio",
         "depto_primer_piso"
       ],
-      "problema_que_ataca": "Frena parte del chiflón y del frío de una puerta delgada, hueca o con vidrio, sin tocar la puerta.",
-      "tip_practico": "Cuélgala unos 10 cm sobre el marco y deja que llegue casi al piso. Ábrela de día si hay sol cerca de la puerta.",
+      "problema_que_ataca": "Atenúa el frío que entra por puertas huecas, metálicas, vidriadas o con filtraciones sin intervenir ni perforar la hoja.",
+      "tip_practico": "Cuélgala unos 10 cm sobre el marco hasta casi tocar el piso. Ideal para arrendatarios como complemento a burletes.",
       "precaucion": null,
       "donde_comprar": "Sodimac, Easy, tiendas de hogar",
       "subsidio_ds27": "no"
     },
     {
+      "id": "B16_alfombra_aislante_piso",
+      "nombre": "Alfombra gruesa o base aislante en pisos fríos (1er piso / casas)",
+      "descripcion_corta": "Alfombra densa o bajo-alfombra de fieltro en living y dormitorios sobre radier o estacionamientos fríos.",
+      "categoria": "bajo_costo",
+      "tags": [
+        "fuga_piso"
+      ],
+      "excluir_si": {
+        "piso": [
+          "adiabatico",
+          "piso_aislado"
+        ]
+      },
+      "elemento": "piso",
+      "impacto": "medio",
+      "impacto_termico_1_10": 4,
+      "temporada": "invierno",
+      "costo": {
+        "simbolo": "$",
+        "min_clp": 12000,
+        "max_clp": 29000,
+        "tipico_clp": 20000,
+        "unidad": "por recinto (alfombra mediana)",
+        "precio_unitario_texto": "$12.000 – $29.000 por recinto",
+        "total_referencial_texto": "1 alfombra/base aislante para living o dormitorio: ~$20.000",
+        "caso_tipico": "Alfombra gruesa o base de fieltro/espuma bajo alfombra en zona de estar o junto a la cama"
+      },
+      "dificultad": "facil",
+      "hazlo_tu_mismo": true,
+      "apto_arrendatario": "si",
+      "aplica_a": [
+        "casa_aislada",
+        "casa_pareada",
+        "casa_continua",
+        "depto_primer_piso"
+      ],
+      "problema_que_ataca": "Reduce la pérdida de calor por contacto hacia pisos fríos de cerámica, baldosa o radier sobre tierra o estacionamientos.",
+      "tip_practico": "Prioriza las zonas donde permaneces sentado o donde bajas los pies de la cama. Agregar un bajo-alfombra de fieltro duplica el confort.",
+      "precaucion": "Asegura las esquinas con malla antideslizante para evitar tropiezos.",
+      "donde_comprar": "Sodimac, Easy, tiendas de hogar",
+      "subsidio_ds27": "no"
+    },
+    {
       "id": "A01_aislacion_cielo_lana_mineral",
-      "nombre": "Aislación del techo con lana mineral de 10 a 14 cm",
-      "descripcion_corta": "Lana mineral de 10 a 14 cm en el cielo, instalada por un maestro. Es la medida más efectiva para techos sin aislación.",
+      "nombre": "Aislación completa del techo con lana mineral de 10 a 14 cm",
+      "descripcion_corta": "Lana mineral de 10 a 14 cm en todo el cielo, instalada por un maestro. Es la medida pasiva más efectiva en casas.",
       "categoria": "alto_impacto",
       "tags": [
         "fuga_techo"
@@ -744,35 +880,40 @@ window.SOLUTIONS_CATALOG = {
           "aislacion_alta"
         ]
       },
+      "grupo_alternativa": "techo_etapas",
+      "etiqueta_alternativa": "Solución definitiva completa para techo de casa",
       "elemento": "techo",
       "impacto": "alto",
       "impacto_termico_1_10": 10,
       "temporada": "ambas",
       "costo": {
         "simbolo": "$$$",
-        "min_clp": 7000,
-        "max_clp": 15000,
+        "min_clp": 280000,
+        "max_clp": 600000,
         "tipico_clp": 400000,
-        "unidad": "por m² (ejemplo total ~$400.000)",
-        "caso_tipico": "40 m² de cielo, lana mineral de 100 a 140 mm con instalación"
+        "unidad": "vivienda referencial (~40 m²)",
+        "precio_unitario_texto": "$7.000 – $15.000 por m² instalado",
+        "total_referencial_texto": "Total referencial casa ~40 m²: $280.000 – $600.000",
+        "caso_tipico": "40 m² de cielo con lana mineral de 100 a 140 mm e instalación"
       },
       "dificultad": "profesional",
       "hazlo_tu_mismo": false,
       "apto_arrendatario": "no",
       "aplica_a": [
         "casa_aislada",
-        "casa_pareada"
+        "casa_pareada",
+        "casa_continua"
       ],
-      "problema_que_ataca": "Es la medida más efectiva para casas con entretecho: frena la pérdida de calor en invierno y el calor del techo en verano.",
-      "tip_practico": "Pide cotizar con aislación de 10 a 14 cm tendida sin huecos, con barrera de vapor hacia el lado interior y sin tapar la ventilación del entretecho. Un cielo bien aislado se nota desde la primera noche fría.",
-      "precaucion": "Pide al maestro que revise antes la instalación eléctrica y los focos embutidos del cielo.",
-      "donde_comprar": "Maestros e instaladores; materiales en Sodimac, Easy y distribuidores",
+      "problema_que_ataca": "Frena la principal fuga de calor en invierno y el sobrecalentamiento del techo en verano.",
+      "tip_practico": "Pide aislación continua de 10 a 14 cm sin huecos, con barrera de vapor hacia el interior y respetando la ventilación del entretecho.",
+      "precaucion": "Pide al instalador revisar antes el estado eléctrico y focos embutidos del cielo.",
+      "donde_comprar": "Maestros e instaladores; materiales en Sodimac y Easy",
       "subsidio_ds27": "si"
     },
     {
       "id": "A02_aislacion_losa_techo_plano",
       "nombre": "Aislación sobre losa o techo plano con planchas aislantes",
-      "descripcion_corta": "Planchas aislantes sobre losa o techo plano, con impermeabilización. Corrige el calor y el frío de techos de hormigón.",
+      "descripcion_corta": "Planchas aislantes sobre losa con impermeabilización. Corrige el frío y calor extremo en departamentos de último piso.",
       "categoria": "alto_impacto",
       "tags": [
         "fuga_techo"
@@ -790,10 +931,12 @@ window.SOLUTIONS_CATALOG = {
       "temporada": "ambas",
       "costo": {
         "simbolo": "$$$",
-        "min_clp": 20000,
-        "max_clp": 45000,
+        "min_clp": 600000,
+        "max_clp": 1350000,
         "tipico_clp": 900000,
-        "unidad": "por m² (ejemplo total ~$900.000)",
+        "unidad": "depto referencial (~30 m²)",
+        "precio_unitario_texto": "$20.000 – $45.000 por m² instalado",
+        "total_referencial_texto": "Total referencial losa ~30 m²: $600.000 – $1.350.000",
         "caso_tipico": "30 m² de losa expuesta con aislación e impermeabilización"
       },
       "dificultad": "profesional",
@@ -802,16 +945,16 @@ window.SOLUTIONS_CATALOG = {
       "aplica_a": [
         "depto_ultimo_piso"
       ],
-      "problema_que_ataca": "Corrige el calor y el frío que pasan por una losa de hormigón o un techo plano sin aislación, típico de departamentos de último piso.",
-      "tip_practico": "En un edificio, la azotea es parte de las áreas comunes: necesitas el acuerdo de la comunidad. Pide cotización a una empresa con experiencia en impermeabilización y aislación.",
-      "precaucion": "Una aislación mal puesta sobre una losa con filtraciones atrapa humedad. Corrige primero las filtraciones.",
+      "problema_que_ataca": "Corrige el calor y frío que atraviesan una losa de hormigón sin aislación en últimos pisos.",
+      "tip_practico": "En edificios la cubierta es bien común: requiere acuerdo del Comité de Administración (postulable colectivamente a DS 27).",
+      "precaucion": "Repara cualquier filtración de agua antes de aislar para no atrapar humedad.",
       "donde_comprar": "Empresas de aislación e impermeabilización",
       "subsidio_ds27": "si"
     },
     {
       "id": "A03_aislacion_termica_exterior_muros",
       "nombre": "Aislación exterior de muros (sistema EIFS o similar)",
-      "descripcion_corta": "Capa aislante continua por fuera del muro (EIFS). Corrige el muro frío y también los puntos fríos de pilares y vigas.",
+      "descripcion_corta": "Capa aislante continua por fuera del muro (EIFS). Corrige muros fríos y elimina puentes térmicos en pilares y losas.",
       "categoria": "alto_impacto",
       "tags": [
         "muro_sin_aislacion",
@@ -822,17 +965,21 @@ window.SOLUTIONS_CATALOG = {
           "muro_aislacion_exterior"
         ]
       },
+      "grupo_alternativa": "aislacion_muro",
+      "etiqueta_alternativa": "Alternativa A para muros (por fuera — no combinar con trasdosado interior)",
       "elemento": "muros",
       "impacto": "alto",
       "impacto_termico_1_10": 9,
       "temporada": "ambas",
       "costo": {
         "simbolo": "$$$",
-        "min_clp": 35000,
-        "max_clp": 65000,
+        "min_clp": 1400000,
+        "max_clp": 2600000,
         "tipico_clp": 2000000,
-        "unidad": "por m² (ejemplo total ~$2.000.000)",
-        "caso_tipico": "40 m² de fachada con poliestireno de 40 a 50 mm y revoque"
+        "unidad": "fachada referencial (~40 m²)",
+        "precio_unitario_texto": "$35.000 – $65.000 por m² instalado",
+        "total_referencial_texto": "Total referencial ~40 m² fachada: $1.400.000 – $2.600.000",
+        "caso_tipico": "40 m² de fachada con aislación exterior continua y terminación elastomérica"
       },
       "dificultad": "profesional",
       "hazlo_tu_mismo": false,
@@ -840,20 +987,21 @@ window.SOLUTIONS_CATALOG = {
       "aplica_a": [
         "casa_aislada",
         "casa_pareada",
+        "casa_continua",
         "depto_ultimo_piso",
         "depto_intermedio",
         "depto_primer_piso"
       ],
-      "problema_que_ataca": "Envuelve el muro por fuera con una capa aislante continua, lo que también corrige los puntos fríos de pilares, vigas y esquinas.",
-      "tip_practico": "Es la mejor opción técnica para muros sin aislación, pero también la más cara. Conviene hacerla junto con otras obras de fachada o postulando a DS 27. En departamentos se decide entre la comunidad.",
-      "precaucion": "Exige un maestro con experiencia comprobada en el sistema: una mala instalación se agrieta y filtra.",
-      "donde_comprar": "Empresas constructoras y maestros especializados",
+      "problema_que_ataca": "Envuelve el muro por fuera, mejorando la aislación y eliminando puentes térmicos de pilares, vigas y esquinas.",
+      "tip_practico": "Es la solución técnica más completa para muros; por su costo conviene postularla mediante Subsidio DS 27 Cap. IV.",
+      "precaucion": "Requiere instalador especializado; una mala terminación puede agrietarse y filtrar lluvia.",
+      "donde_comprar": "Empresas constructoras y Entidades Patrocinantes (EP)",
       "subsidio_ds27": "si"
     },
     {
       "id": "A04_trasdosado_interior_muros",
-      "nombre": "Aislación interior de muros (trasdosado con lana o poliestireno y yeso-cartón)",
-      "descripcion_corta": "Aislación y yeso-cartón por dentro del muro. Sirve cuando no se puede intervenir la fachada; resta unos 5 a 8 cm.",
+      "nombre": "Aislación interior de muros con revestimiento certificado (trasdosado)",
+      "descripcion_corta": "Lana mineral + barrera de vapor + placa de yeso-cartón ignífuga por dentro del muro. Útil cuando no se puede intervenir la fachada.",
       "categoria": "alto_impacto",
       "tags": [
         "muro_sin_aislacion"
@@ -864,17 +1012,21 @@ window.SOLUTIONS_CATALOG = {
           "muro_aislacion_exterior"
         ]
       },
+      "grupo_alternativa": "aislacion_muro",
+      "etiqueta_alternativa": "Alternativa B para muros (por dentro — elegir solo A o B)",
       "elemento": "muros",
       "impacto": "alto",
       "impacto_termico_1_10": 7,
       "temporada": "invierno",
       "costo": {
         "simbolo": "$$$",
-        "min_clp": 22000,
-        "max_clp": 40000,
+        "min_clp": 880000,
+        "max_clp": 1600000,
         "tipico_clp": 1200000,
-        "unidad": "por m² (ejemplo total ~$1.200.000)",
-        "caso_tipico": "40 m² de muros exteriores en 2 o 3 piezas, con aislación y volcanita"
+        "unidad": "muros referenciales (~40 m²)",
+        "precio_unitario_texto": "$22.000 – $40.000 por m² instalado",
+        "total_referencial_texto": "Total referencial ~40 m² muros: $880.000 – $1.600.000 (1 muro ~10 m²: ~$300.000)",
+        "caso_tipico": "40 m² de muros exteriores con lana mineral, barrera de vapor y yeso-cartón"
       },
       "dificultad": "profesional",
       "hazlo_tu_mismo": false,
@@ -882,20 +1034,21 @@ window.SOLUTIONS_CATALOG = {
       "aplica_a": [
         "casa_aislada",
         "casa_pareada",
+        "casa_continua",
         "depto_ultimo_piso",
         "depto_intermedio",
         "depto_primer_piso"
       ],
-      "problema_que_ataca": "Mejora un muro sin aislación desde adentro cuando no se puede intervenir la fachada, por ejemplo en edificios o en casas pareadas.",
-      "tip_practico": "Parte por la pieza más fría (dormitorio o living al sur). Se pierde algo de espacio, unos 5 a 8 cm por muro.",
-      "precaucion": "Puede dejar puntos fríos en esquinas y encuentros con la losa, donde puede aparecer humedad. Por eso conviene combinarla con buena ventilación.",
+      "problema_que_ataca": "Aísla muros sin aislación desde el interior cuando no se puede intervenir la fachada (edificios o casas pareadas/continuas).",
+      "tip_practico": "Exige siempre barrera de vapor hacia el lado tibio (evaluación higrotérmica) y placa de yeso-cartón sellada como barrera ignífuga. Parte por el dormitorio más frío.",
+      "precaucion": "Nunca dejes aislantes combustibles expuestos; requiere terminación de yeso-cartón y buena ventilación para evitar condensación oculta.",
       "donde_comprar": "Maestros e instaladores; materiales en Sodimac y Easy",
       "subsidio_ds27": "consultar_ep"
     },
     {
       "id": "A05_termopanel_ventanas_pvc",
-      "nombre": "Ventanas nuevas de PVC con termopanel (doble vidriado hermético)",
-      "descripcion_corta": "Ventanas nuevas de PVC con termopanel. Cambian de una vez el vidrio simple, el marco metálico y las rendijas.",
+      "nombre": "Ventanas nuevas de PVC con termopanel (DVH)",
+      "descripcion_corta": "Ventanas de PVC con doble vidriado hermético. Reemplaza vidrio simple y marco metálico frío de una sola vez.",
       "categoria": "alto_impacto",
       "tags": [
         "vidrio_simple",
@@ -907,17 +1060,21 @@ window.SOLUTIONS_CATALOG = {
           "dvh_alto"
         ]
       },
+      "grupo_alternativa": "mejora_ventanas",
+      "etiqueta_alternativa": "Alternativa A para ventanas (recambio completo — elegir A o B)",
       "elemento": "ventanas",
       "impacto": "alto",
       "impacto_termico_1_10": 9,
       "temporada": "ambas",
       "costo": {
         "simbolo": "$$$",
-        "min_clp": 140000,
-        "max_clp": 280000,
+        "min_clp": 700000,
+        "max_clp": 1400000,
         "tipico_clp": 1000000,
-        "unidad": "por m² instalado (ejemplo total ~$1.000.000)",
-        "caso_tipico": "3 ventanas, unos 5 m² en total, marco PVC y termopanel con instalación"
+        "unidad": "3 ventanas (~5 m²)",
+        "precio_unitario_texto": "$140.000 – $280.000 por m² instalado",
+        "total_referencial_texto": "Total referencial 3 ventanas (~5 m²): $700.000 – $1.400.000",
+        "caso_tipico": "3 ventanas (~5 m² en total) con marco PVC y termopanel instalado"
       },
       "dificultad": "profesional",
       "hazlo_tu_mismo": false,
@@ -925,20 +1082,21 @@ window.SOLUTIONS_CATALOG = {
       "aplica_a": [
         "casa_aislada",
         "casa_pareada",
+        "casa_continua",
         "depto_ultimo_piso",
         "depto_intermedio",
         "depto_primer_piso"
       ],
-      "problema_que_ataca": "Cambia de una vez el vidrio simple, el marco metálico frío y las rendijas. Según el Manual CEV, el vidrio simple tiene U de 5,80 y el termopanel entre 2,80 y 3,58.",
-      "tip_practico": "Parte por las ventanas del dormitorio y del lado sur, y por las de mayor tamaño. Pide ventanas proyectantes o abatibles, que sellan mejor que las correderas. Cotiza con 3 empresas.",
-      "precaucion": "En departamentos, el cambio de ventanas que dan a la fachada requiere permiso de la comunidad.",
-      "donde_comprar": "Empresas de ventanas PVC; cotizar en Sodimac y fabricantes",
+      "problema_que_ataca": "Reduce casi a la mitad la transmitancia térmica frente al vidrio simple (de U 5,80 a ~2,80 W/m²K según Manual CEV) y elimina marcos metálicos fríos.",
+      "tip_practico": "Prioriza dormitorios y fachada sur o poniente. Prefiere cierres proyectantes o abatibles antes que correderas.",
+      "precaucion": "En departamentos, cambiar diseño o color de ventanas de fachada requiere autorización de la comunidad.",
+      "donde_comprar": "Fabricantes de ventanas PVC; cotizar con 3 proveedores",
       "subsidio_ds27": "consultar_ep"
     },
     {
       "id": "A06_sobreventana_doble_ventana",
       "nombre": "Sobreventana interior (doble ventana)",
-      "descripcion_corta": "Segunda ventana por dentro, sin sacar la actual. Baja el U de 5,80 a unos 3,30: alternativa más barata al termopanel.",
+      "descripcion_corta": "Segunda ventana por dentro sin retirar la actual. Baja el U de 5,80 a ~3,30 W/m²K a menor costo que el termopanel.",
       "categoria": "alto_impacto",
       "tags": [
         "vidrio_simple"
@@ -950,17 +1108,21 @@ window.SOLUTIONS_CATALOG = {
           "dvh_alto"
         ]
       },
+      "grupo_alternativa": "mejora_ventanas",
+      "etiqueta_alternativa": "Alternativa B para ventanas (más económica — elegir A o B)",
       "elemento": "ventanas",
       "impacto": "alto",
       "impacto_termico_1_10": 7,
       "temporada": "invierno",
       "costo": {
         "simbolo": "$$",
-        "min_clp": 60000,
-        "max_clp": 130000,
+        "min_clp": 300000,
+        "max_clp": 650000,
         "tipico_clp": 450000,
-        "unidad": "por m² (ejemplo total ~$450.000)",
-        "caso_tipico": "5 m² de ventanas con una segunda ventana por dentro, con perfil y vidrio simple"
+        "unidad": "3 ventanas (~5 m²)",
+        "precio_unitario_texto": "$60.000 – $130.000 por m² instalado",
+        "total_referencial_texto": "Total referencial 3 ventanas (~5 m²): $300.000 – $650.000",
+        "caso_tipico": "5 m² de ventanas con segunda hoja interior sellada"
       },
       "dificultad": "profesional",
       "hazlo_tu_mismo": false,
@@ -968,23 +1130,25 @@ window.SOLUTIONS_CATALOG = {
       "aplica_a": [
         "casa_aislada",
         "casa_pareada",
+        "casa_continua",
         "depto_ultimo_piso",
         "depto_intermedio",
         "depto_primer_piso"
       ],
-      "problema_que_ataca": "Agrega una segunda ventana por dentro, sin sacar la actual. Según el Manual CEV, una doble ventana baja el U de 5,80 a unos 3,30. Es una alternativa más barata que el termopanel.",
-      "tip_practico": "Funciona bien cuando no puedes cambiar las ventanas de fachada. Pide que el cierre sea hermético y que se pueda abrir para limpiar.",
+      "problema_que_ataca": "Crea una cámara de aire aislante sin tocar la fachada exterior (Manual CEV: baja U de 5,80 a 3,30 W/m²K).",
+      "tip_practico": "Muy útil en edificios patrimoniales o comunidades donde no permiten cambiar la ventana exterior.",
       "precaucion": null,
-      "donde_comprar": "Talleres de aluminio y PVC; cotizar con 2 o 3 empresas",
+      "donde_comprar": "Talleres de aluminio y PVC",
       "subsidio_ds27": "consultar_ep"
     },
     {
       "id": "A07_ajuste_y_mantencion_ventanas",
-      "nombre": "Ajuste de herrajes y cambio de burletes por un maestro",
-      "descripcion_corta": "Un maestro ajusta herrajes y repone burletes. Mejora el cierre de ventanas que aún están en buen estado.",
+      "nombre": "Ajuste de herrajes y recambio profesional de felpas/burletes",
+      "descripcion_corta": "Un técnico ajusta carros, pestillos y repone burletes en ventanas con chiflones confirmados o guillotinas antiguas.",
       "categoria": "alto_impacto",
       "tags": [
-        "infiltracion_ventanas"
+        "infiltracion_ventanas",
+        "riesgo_infiltracion_ventanas"
       ],
       "excluir_si": {
         "cierreVentana": [
@@ -997,11 +1161,6 @@ window.SOLUTIONS_CATALOG = {
         ],
         "cierreVentana": [
           "guillotina_antigua"
-        ],
-        "antiguedad": [
-          "11_15",
-          "16_20",
-          "21_mas"
         ]
       },
       "elemento": "ventanas",
@@ -1014,7 +1173,9 @@ window.SOLUTIONS_CATALOG = {
         "max_clp": 90000,
         "tipico_clp": 50000,
         "unidad": "por ventana",
-        "caso_tipico": "Ajuste de ruedas y cierres, nuevo burlete y sellado, por un carpintero o técnico de ventanas"
+        "precio_unitario_texto": "$30.000 – $90.000 por ventana",
+        "total_referencial_texto": "1 a 3 ventanas críticas: $50.000 – $150.000",
+        "caso_tipico": "Ajuste de ruedas, pestillos, cambio de felpas y sellado por técnico"
       },
       "dificultad": "profesional",
       "hazlo_tu_mismo": false,
@@ -1022,23 +1183,24 @@ window.SOLUTIONS_CATALOG = {
       "aplica_a": [
         "casa_aislada",
         "casa_pareada",
+        "casa_continua",
         "depto_ultimo_piso",
         "depto_intermedio",
         "depto_primer_piso"
       ],
-      "problema_que_ataca": "Arregla ventanas correderas o de guillotina que ya no cierran bien. Mejora el sello sin cambiar todo el conjunto.",
-      "tip_practico": "Conviene si los marcos y vidrios están en buen estado (incluso si ya tienes termopanel) y solo falla el cierre o la felpa.",
+      "problema_que_ataca": "Devuelve la hermeticidad a ventanas correderas o antiguas con chiflones sin tener que reemplazar toda la ventana.",
+      "tip_practico": "Excelente opción si tus vidrios ya son termopanel pero la ventana descuadrada deja pasar aire.",
       "precaucion": null,
-      "donde_comprar": "Carpinteros, técnicos de ventanas y talleres de aluminio",
+      "donde_comprar": "Técnicos de ventanas PVC/aluminio y carpinteros",
       "subsidio_ds27": "no"
     },
     {
       "id": "A08_puerta_exterior_nueva",
-      "nombre": "Puerta exterior de madera sólida o aislada, con marco sellado",
-      "descripcion_corta": "Puerta de madera sólida o aislada con marco sellado. Reemplaza puertas huecas, delgadas o con vidrio.",
+      "nombre": "Puerta exterior de madera sólida o núcleo aislante con burlete",
+      "descripcion_corta": "Reemplaza una puerta hueca, metálica o con vidrio simple por una de madera maciza (U 1,70 vs 2,63 W/m²K en Manual CEV).",
       "categoria": "alto_impacto",
       "tags": [
-        "infiltracion_puerta"
+        "puerta_poco_aislada"
       ],
       "excluir_si": {
         "puerta": [
@@ -1055,7 +1217,9 @@ window.SOLUTIONS_CATALOG = {
         "max_clp": 350000,
         "tipico_clp": 200000,
         "unidad": "por puerta instalada",
-        "caso_tipico": "Puerta maciza o con relleno aislante, con marco y burletes"
+        "precio_unitario_texto": "$120.000 – $350.000 por puerta instalada",
+        "total_referencial_texto": "1 puerta principal instalada: ~$200.000",
+        "caso_tipico": "Puerta maciza o con relleno aislante, instalada con marco y burletes"
       },
       "dificultad": "profesional",
       "hazlo_tu_mismo": false,
@@ -1063,20 +1227,21 @@ window.SOLUTIONS_CATALOG = {
       "aplica_a": [
         "casa_aislada",
         "casa_pareada",
+        "casa_continua",
         "depto_ultimo_piso",
         "depto_intermedio",
         "depto_primer_piso"
       ],
-      "problema_que_ataca": "Reemplaza una puerta hueca, delgada o con vidrio. Según el Manual CEV, una puerta de madera sólida tiene U de 1,70 frente a 2,63 de una entablerada o hueca.",
-      "tip_practico": "Haz primero la prueba de las medidas baratas (burletes). Si la puerta está muy dañada o es muy delgada, cambia la hoja y el marco juntos.",
+      "problema_que_ataca": "Reduce las pérdidas por conducción térmica de puertas huecas, metálicas o con mucho vidrio simple.",
+      "tip_practico": "Si además sientes chiflones, parte sellando con burletes económicos antes de evaluar el cambio completo.",
       "precaucion": null,
       "donde_comprar": "Sodimac, Easy, carpinterías",
       "subsidio_ds27": "no"
     },
     {
       "id": "A09_proteccion_solar_exterior",
-      "nombre": "Protección solar exterior fija o móvil (persianas, lamas o toldo)",
-      "descripcion_corta": "Persianas exteriores, lamas o toldo que frenan el sol antes del vidrio. Mucho más efectivo que una cortina interior.",
+      "nombre": "Protección solar exterior retráctil (persiana exterior, celosía o toldo)",
+      "descripcion_corta": "Persiana exterior o toldo móvil que bloquea el sol de verano antes del vidrio y se recoge en invierno.",
       "categoria": "alto_impacto",
       "tags": [
         "sobrecalentamiento_poniente",
@@ -1084,7 +1249,7 @@ window.SOLUTIONS_CATALOG = {
       ],
       "excluir_si": {
         "tieneAleroOToldo": [
-          true
+          "completo"
         ],
         "nivelSombraEntorno": [
           "muy_sombreado"
@@ -1093,6 +1258,8 @@ window.SOLUTIONS_CATALOG = {
           "sur"
         ]
       },
+      "grupo_alternativa": "sombra_exterior",
+      "etiqueta_alternativa": "Alternativa A exterior (retráctil — funciona tanto en Poniente como en Norte)",
       "elemento": "entorno_solar",
       "impacto": "alto",
       "impacto_termico_1_10": 9,
@@ -1103,7 +1270,9 @@ window.SOLUTIONS_CATALOG = {
         "max_clp": 250000,
         "tipico_clp": 120000,
         "unidad": "por ventana",
-        "caso_tipico": "Persiana exterior, toldo retráctil o lamas en una ventana al poniente"
+        "precio_unitario_texto": "$60.000 – $250.000 por ventana",
+        "total_referencial_texto": "1 a 2 ventanas principales: $120.000 – $240.000",
+        "caso_tipico": "Persiana enrollable exterior o toldo retráctil en fachada expuesta"
       },
       "dificultad": "profesional",
       "hazlo_tu_mismo": false,
@@ -1111,20 +1280,21 @@ window.SOLUTIONS_CATALOG = {
       "aplica_a": [
         "casa_aislada",
         "casa_pareada",
+        "casa_continua",
         "depto_ultimo_piso",
         "depto_intermedio",
         "depto_primer_piso"
       ],
-      "problema_que_ataca": "Frena el sol de la tarde antes de que llegue al vidrio. Es mucho más efectivo que una cortina por dentro.",
-      "tip_practico": "Prefiere una protección que puedas recoger en invierno para aprovechar el sol. Parte por la ventana del dormitorio o del living al poniente.",
-      "precaucion": "En edificios, la fachada es área común: pide autorización a la administración.",
-      "donde_comprar": "Empresas de toldos y persianas; cotizar con 2 o 3 proveedores",
+      "problema_que_ataca": "Detiene el sol antes de que toque el vidrio en verano y se puede recoger en invierno para no perder calor solar.",
+      "tip_practico": "En fachadas al Norte, poder recogerlo en invierno es clave para aprovechar el sol bajo gratuito.",
+      "precaucion": "En edificios, la instalación en fachada requiere permiso de la administración.",
+      "donde_comprar": "Empresas de toldos y persianas exteriores",
       "subsidio_ds27": "no"
     },
     {
       "id": "A10_alero_pergola_vegetacion",
-      "nombre": "Alero, pérgola o árbol de hoja caduca para dar sombra",
-      "descripcion_corta": "Alero, pérgola o árboles de hoja caduca en el lado poniente. Dan sombra fija en verano y dejan pasar el sol en invierno.",
+      "nombre": "Alero horizontal, pérgola o árbol caducifolio de sombra",
+      "descripcion_corta": "Alero horizontal (ideal al Norte) o pérgola con parra/árbol de hoja caduca para sombrear fachadas de casas en verano.",
       "categoria": "alto_impacto",
       "tags": [
         "falta_sombra_solar",
@@ -1132,7 +1302,7 @@ window.SOLUTIONS_CATALOG = {
       ],
       "excluir_si": {
         "tieneAleroOToldo": [
-          true
+          "completo"
         ],
         "nivelSombraEntorno": [
           "muy_sombreado"
@@ -1141,6 +1311,8 @@ window.SOLUTIONS_CATALOG = {
           "sur"
         ]
       },
+      "grupo_alternativa": "sombra_exterior",
+      "etiqueta_alternativa": "Alternativa B exterior fija (solo casas — elegir A o B)",
       "elemento": "entorno_solar",
       "impacto": "alto",
       "impacto_termico_1_10": 7,
@@ -1151,25 +1323,28 @@ window.SOLUTIONS_CATALOG = {
         "max_clp": 600000,
         "tipico_clp": 300000,
         "unidad": "por fachada o patio",
-        "caso_tipico": "Pérgola de madera o metal con enredadera, o 1 o 2 árboles caducifolios en el lado poniente"
+        "precio_unitario_texto": "$150.000 – $600.000 por fachada",
+        "total_referencial_texto": "1 alero o pérgola exterior: ~$300.000",
+        "caso_tipico": "Alero horizontal sobre ventanas norte o pérgola con enredadera caducifolia al poniente"
       },
       "dificultad": "profesional",
       "hazlo_tu_mismo": false,
       "apto_arrendatario": "no",
       "aplica_a": [
         "casa_aislada",
-        "casa_pareada"
+        "casa_pareada",
+        "casa_continua"
       ],
-      "problema_que_ataca": "Da sombra fija a la fachada poniente en verano y deja pasar el sol cuando pierde las hojas en invierno.",
-      "tip_practico": "Un árbol demora años en dar buena sombra, así que combínalo con una malla o pérgola mientras crece. Consulta en tu municipalidad si necesitas permiso para plantar o construir.",
-      "precaucion": "Planta lejos de cañerías, cimientos y cables. Para una pérgola, revisa los permisos de edificación de tu comuna.",
-      "donde_comprar": "Viveros y maestros de carpintería o metalmecánica",
+      "problema_que_ataca": "En fachada Norte, un alero horizontal bien dimensionado bloquea el sol alto del verano y deja entrar el sol bajo del invierno.",
+      "tip_practico": "Si plantas árboles (ej. liquidámbar, fresno o jacarandá), elige hoja caduca y aléjalos de cañerías y cimientos.",
+      "precaucion": "Revisa permisos municipales si construyes una pérgola techada grande.",
+      "donde_comprar": "Maestros de carpintería/metalmecánica y viveros",
       "subsidio_ds27": "no"
     },
     {
       "id": "A11_correccion_puentes_termicos_puntuales",
-      "nombre": "Aislación exterior parcial en pilares, vigas y esquinas frías",
-      "descripcion_corta": "Aislación exterior solo en pilares, vigas y esquinas con humedad. Alternativa acotada cuando el muro ya tiene aislación por dentro.",
+      "nombre": "Aislación exterior puntual en pilares, vigas y esquinas frías",
+      "descripcion_corta": "Aislación focalizada en pilares y esquinas con condensación cuando el muro ya tiene aislación por dentro.",
       "categoria": "alto_impacto",
       "tags": [
         "puente_termico_muro"
@@ -1185,11 +1360,13 @@ window.SOLUTIONS_CATALOG = {
       "temporada": "invierno",
       "costo": {
         "simbolo": "$$$",
-        "min_clp": 30000,
-        "max_clp": 60000,
+        "min_clp": 240000,
+        "max_clp": 480000,
         "tipico_clp": 400000,
-        "unidad": "por m² (ejemplo total ~$400.000)",
-        "caso_tipico": "8 m² de aislación exterior en esquinas y pilares con humedad"
+        "unidad": "puntos críticos (~8 m²)",
+        "precio_unitario_texto": "$30.000 – $60.000 por m² intervenido",
+        "total_referencial_texto": "Total referencial ~8 m² de esquinas/pilares: $240.000 – $480.000",
+        "caso_tipico": "8 m² de aislación exterior en esquinas y pilares con puente térmico"
       },
       "dificultad": "profesional",
       "hazlo_tu_mismo": false,
@@ -1197,21 +1374,71 @@ window.SOLUTIONS_CATALOG = {
       "aplica_a": [
         "casa_aislada",
         "casa_pareada",
+        "casa_continua",
         "depto_ultimo_piso",
         "depto_intermedio",
         "depto_primer_piso"
       ],
-      "problema_que_ataca": "Trata solo los puntos más fríos del muro (esquinas, pilares, vigas), donde aparece humedad y hongos aunque el muro ya tenga aislación interior.",
-      "tip_practico": "Es una alternativa más acotada que aislar todo el muro. Pide a un maestro que identifique los puntos con humedad antes de cotizar.",
+      "problema_que_ataca": "Corrige solo los puentes térmicos en pilares y losas sin rehacer toda la aislación del muro.",
+      "tip_practico": "Pide a un maestro identificar primero los puntos donde aparece frío o humedad localizada.",
       "precaucion": null,
       "donde_comprar": "Maestros e instaladores de aislación",
       "subsidio_ds27": "consultar_ep"
     },
     {
-      "id": "A12_aire_acondicionado_inverter",
-      "nombre": "Aire acondicionado Split Inverter (Bomba de calor aire-aire frío/calor)",
-      "descripcion_corta": "Climatización eficiente para invierno y verano. Entrega 3 a 4 veces más calor que una estufa eléctrica por el mismo consumo, bajando la cuenta mes a mes.",
+      "id": "A13_aislacion_piso_ventilado",
+      "nombre": "Aislación bajo piso ventilado o manta térmica bajo piso flotante",
+      "descripcion_corta": "Aislación por debajo de pisos sobre estacionamientos/pilotes o instalación de piso flotante con manta aislante densa.",
       "categoria": "alto_impacto",
+      "tags": [
+        "fuga_piso"
+      ],
+      "excluir_si": {
+        "piso": [
+          "adiabatico",
+          "piso_aislado"
+        ]
+      },
+      "elemento": "piso",
+      "impacto": "alto",
+      "impacto_termico_1_10": 7,
+      "temporada": "invierno",
+      "costo": {
+        "simbolo": "$$$",
+        "min_clp": 350000,
+        "max_clp": 950000,
+        "tipico_clp": 600000,
+        "unidad": "superficie ~35 m²",
+        "precio_unitario_texto": "$10.000 – $28.000 por m² instalado",
+        "total_referencial_texto": "Total referencial ~35 m²: $350.000 – $950.000",
+        "caso_tipico": "Aislación bajo losa de estacionamiento abierto (EPS/lana) o piso flotante con espuma densa"
+      },
+      "dificultad": "profesional",
+      "hazlo_tu_mismo": false,
+      "apto_arrendatario": "no",
+      "aplica_a": [
+        "casa_aislada",
+        "casa_pareada",
+        "casa_continua",
+        "depto_primer_piso"
+      ],
+      "problema_que_ataca": "Frena la pérdida de calor a través de pisos expuestos a estacionamientos abiertos, pilotes o radier frío.",
+      "tip_practico": "En pisos sobre estacionamiento, aislar por la cara inferior de la losa es lo más efectivo (postulable en DS 27 Cap. IV). Sobre radier, un piso flotante con manta térmica gruesa mejora mucho la sensación térmica.",
+      "precaucion": "En edificios, intervenir el cielo del estacionamiento requiere autorización de la administración.",
+      "donde_comprar": "Maestros instaladores, Sodimac, Easy",
+      "subsidio_ds27": "si"
+    },
+    {
+      "id": "A12_aire_acondicionado_inverter",
+      "nombre": "Aire acondicionado Split Inverter (Bomba de calor frío/calor)",
+      "descripcion_corta": "Climatización activa eficiente para reducir el gasto mensual frente a estufas eléctricas, gas o parafina, y refrescar en verano.",
+      "categoria": "alto_impacto",
+      "es_climatizacion_activa": true,
+      "solo_letras": [
+        "E",
+        "F",
+        "G"
+      ],
       "tags": [
         "sobrecalentamiento_poniente",
         "frio_orientacion_sur",
@@ -1219,7 +1446,11 @@ window.SOLUTIONS_CATALOG = {
         "muro_sin_aislacion",
         "vidrio_simple"
       ],
-      "siempre_recomendable_eficiencia": true,
+      "excluir_si": {
+        "calefaccionActual": [
+          "aire_acondicionado_inverter"
+        ]
+      },
       "elemento": "climatizacion_activa",
       "impacto": "alto",
       "impacto_termico_1_10": 8,
@@ -1229,8 +1460,10 @@ window.SOLUTIONS_CATALOG = {
         "min_clp": 320000,
         "max_clp": 550000,
         "tipico_clp": 420000,
-        "unidad": "equipo + instalación certificada",
-        "caso_tipico": "Equipo Split Inverter 9.000 a 12.000 BTU (eficiencia A o superior) instalado en living o dormitorio principal"
+        "unidad": "equipo + instalación",
+        "precio_unitario_texto": "$320.000 – $550.000 (equipo 9.000–12.000 BTU instalado)",
+        "total_referencial_texto": "1 equipo principal instalado: ~$420.000",
+        "caso_tipico": "Split Inverter 9.000 a 12.000 BTU eficiencia A o superior instalado en living o dormitorio"
       },
       "dificultad": "profesional",
       "hazlo_tu_mismo": false,
@@ -1238,13 +1471,14 @@ window.SOLUTIONS_CATALOG = {
       "aplica_a": [
         "casa_aislada",
         "casa_pareada",
+        "casa_continua",
         "depto_ultimo_piso",
         "depto_intermedio",
         "depto_primer_piso"
       ],
-      "problema_que_ataca": "Reduce drásticamente el gasto mensual en calefacción y enfría en verano. Reconocido por el Manual CEV (Anexo B.2.2) por su alto rendimiento estacional (SCOP/COP 3,0–4,0): frente a estufas eléctricas (1:1), parafina o gas, entrega 3 a 4 kWh de calor por cada 1 kWh de electricidad, sin humedad ni contaminación intradomiciliaria.",
-      "tip_practico": "Para maximizar el ahorro mes a mes, sella primero los chiflones básicos con burletes. Elige tecnología Inverter con etiqueta SEC clase A o superior, úsalo en 20–21 °C en invierno y 24–25 °C en verano, y limpia sus filtros cada mes.",
-      "precaucion": "Requiere instalación por técnico calificado y verificar que el circuito eléctrico soporte la carga. En edificios, confirma con la administración dónde ubicar la unidad exterior.",
+      "problema_que_ataca": "No reemplaza aislar la envolvente, pero complementa el confort bajando el gasto mensual: según Manual CEV (Anexo B.2.2), una bomba de calor aire-aire entrega 3 a 4 veces más calor por kWh que una estufa eléctrica, sin humedad intradomiciliaria.",
+      "tip_practico": "Sella primero los chiflones básicos para no desperdiciar energía. Elige etiqueta SEC clase A o superior, úsalo a 20–21 °C en invierno / 24–25 °C en verano y limpia sus filtros mensualmente.",
+      "precaucion": "Requiere instalación por técnico calificado y verificar capacidad eléctrica. En edificios, confirma ubicación de unidad exterior con administración.",
       "donde_comprar": "Sodimac, Easy, retail y distribuidores de climatización",
       "subsidio_ds27": "no"
     }
@@ -1291,6 +1525,7 @@ window.SOLUTIONS_CATALOG = {
       "id": "T04_ventilar_10_minutos_invierno",
       "titulo": "Ventila 10 minutos al día, en el momento más tibio",
       "tags": [
+        "humedad_condensacion",
         "puente_termico_muro",
         "frio_orientacion_sur",
         "muro_sin_aislacion"
@@ -1330,6 +1565,7 @@ window.SOLUTIONS_CATALOG = {
       "tags": [
         "muro_sin_aislacion",
         "puente_termico_muro",
+        "humedad_condensacion",
         "frio_orientacion_sur"
       ],
       "temporada": "invierno",
@@ -1345,7 +1581,8 @@ window.SOLUTIONS_CATALOG = {
       ],
       "aplica_a": [
         "casa_aislada",
-        "casa_pareada"
+        "casa_pareada",
+        "casa_continua"
       ],
       "temporada": "ambas",
       "momento_del_dia": "Todo el día",
@@ -1356,6 +1593,7 @@ window.SOLUTIONS_CATALOG = {
       "id": "T09_secar_ropa_con_ventilacion",
       "titulo": "Evita secar ropa dentro de las piezas cerradas",
       "tags": [
+        "humedad_condensacion",
         "puente_termico_muro",
         "frio_orientacion_sur"
       ],
@@ -1380,6 +1618,7 @@ window.SOLUTIONS_CATALOG = {
       "id": "T11_secar_condensacion_en_la_manana",
       "titulo": "Seca el agua del vidrio y del marco cada mañana",
       "tags": [
+        "humedad_condensacion",
         "vidrio_simple",
         "marco_metalico_frio"
       ],
@@ -1392,7 +1631,8 @@ window.SOLUTIONS_CATALOG = {
       "id": "T12_cerrar_trabas_y_persianas_de_noche",
       "titulo": "Cierra bien las trabas y baja las persianas de noche",
       "tags": [
-        "infiltracion_ventanas"
+        "infiltracion_ventanas",
+        "riesgo_infiltracion_ventanas"
       ],
       "temporada": "invierno",
       "momento_del_dia": "Noche",
@@ -1433,9 +1673,9 @@ window.SOLUTIONS_CATALOG = {
       "id": "T16_tapar_ollas_y_ventilar_ducha",
       "titulo": "Tapa las ollas al cocinar y ventila tras ducharte",
       "tags": [
+        "humedad_condensacion",
         "puente_termico_muro",
-        "frio_orientacion_sur",
-        "vidrio_simple"
+        "frio_orientacion_sur"
       ],
       "temporada": "invierno",
       "momento_del_dia": "Al cocinar o ducharse",
@@ -1458,9 +1698,8 @@ window.SOLUTIONS_CATALOG = {
       "id": "T18_alfombras_pisos_frios",
       "titulo": "Usa alfombras o bajadas de cama sobre pisos fríos",
       "tags": [
-        "muro_sin_aislacion",
-        "frio_orientacion_sur",
-        "infiltracion_puerta"
+        "fuga_piso",
+        "frio_orientacion_sur"
       ],
       "temporada": "invierno",
       "momento_del_dia": "Todo el día",
@@ -1587,7 +1826,7 @@ window.SOLUTIONS_CATALOG = {
           "Si recibió antes DS 255 o DS 27, tenerlo completamente pagado.",
           "Postular obligatoriamente a través de una Entidad Patrocinante (EP)."
         ],
-        "quienes_no_pueden": "Quienes arriendan no pueden postular directamente porque exige propiedad; pueden compartir su diagnóstico con el dueño y usar las medidas de bajo costo.",
+        "quienes_no_pueden": "Quienes arriendan no pueden postular directamente porque exige propiedad; pueden compartir su diagnóstico con el dueño y usar las medidas económicas.",
         "como_se_postula": [
           "1. Revisa si tu vivienda cumple los requisitos y actualiza tu Registro Social de Hogares.",
           "2. Abre o junta tu ahorro mínimo (3 UF, o 1 UF si tienes 60+ años) con anticipación.",
@@ -1651,7 +1890,7 @@ window.SOLUTIONS_CATALOG = {
     "checklist_preliminar_ui": [
       {
         "pregunta": "¿Eres propietario o asignatario de la vivienda?",
-        "si_no": "Si eres arrendatario, los subsidios MINVU de mejoramiento no aplican directamente. Usa las medidas de bajo costo removibles o comparte tu reporte con el dueño."
+        "si_no": "Si eres arrendatario, los subsidios MINVU de mejoramiento no aplican directamente. Usa las medidas económicas removibles o comparte tu reporte con el dueño."
       },
       {
         "pregunta": "¿Tu vivienda tiene al menos 5 a 10 años de antigüedad?",
@@ -1673,7 +1912,7 @@ window.SOLUTIONS_CATALOG = {
       "categoria": "Normativa y Metodología Técnica · MINVU",
       "titulo": "Manual Técnico para la Calificación Energética de Viviendas (CEV) en Chile",
       "entidad": "Ministerio de Vivienda y Urbanismo (DITEC - MINVU) · Versión Agosto 2025",
-      "descripcion": "Documento oficial que establece los procedimientos técnicos, tablas de transmitancia térmica (U) para vidrios, marcos y puertas, deterioro de muros antiguos, criterios de elementos adiabáticos, bombas de calor aire-aire (Anexo B.2.2), zonificación térmica nacional (Zona D para Santiago urbano) y la escala de calificación A+ a G en que se basa nuestra calculadora.",
+      "descripcion": "Documento oficial que establece los procedimientos técnicos, tablas de transmitancia térmica (U) para vidrios, marcos y puertas, deterioro de muros antiguos, criterios de elementos adiabáticos, bombas de calor aire-aire (Anexo B.2.2), zonificación térmica nacional (Zona D para Santiago urbano y Zona H sobre 2.000 MSNM) y la escala de calificación A+ a G en que se inspira nuestra calculadora.",
       "links": [
         {
           "titulo": "Abrir Manual Técnico CEV (PDF Oficial)",
