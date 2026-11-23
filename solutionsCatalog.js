@@ -1,17 +1,17 @@
 // =========================================================================
-// BANCO DE SOLUCIONES, TIPS COSTO $0, SUBSIDIOS 2026 Y DOCUMENTOS OFICIALES
-// Iniciativa Envuelve tu Casa (Basado en catálogo verificado + MINVU 2026)
+// BANCO DE SOLUCIONES (CON REGLAS ANTI-REDUNDANCIA), TIPS, SUBSIDIOS Y DOCS
+// Iniciativa Envuelve tu Casa v1.2.0
 // =========================================================================
 
 window.SOLUTIONS_CATALOG = {
   "meta": {
     "proyecto": "Iniciativa Envuelve tu Casa",
-    "version": "1.1.0",
+    "version": "1.2.0",
     "fecha_actualizacion": "2026-11-22",
     "moneda": "CLP",
     "zona_termica": "D (Santiago urbano)",
-    "motor_compatible": "thermalEngine.js (WeaknessTag, 10 tags)",
-    "fuente_precios": "Burletes, guardapolvos y selladores: verificados en Sodimac.cl (nov 2026). Todo lo demás: rango referencial estimado en Santiago.",
+    "motor_compatible": "thermalEngine.js v2 (WeaknessTag + reglas de elegibilidad estrictas)",
+    "fuente_precios": "Burletes, guardapolvos y selladores: verificados en Sodimac.cl (nov 2026). Equipos Inverter y obras mayores: rangos referenciales en Santiago.",
     "advertencia_precios": "Precios referenciales en CLP con IVA en Santiago. Pueden variar por tienda y temporada. En medidas de alto impacto, cotiza siempre con 2 o 3 maestros o empresas.",
     "proxima_revision_precios": "2027-05-01",
     "regla_bajo_costo": "categoria = bajo_costo cuando costo.max_clp <= 30000 por unidad (ventana, puerta, kit, rollo o paño).",
@@ -170,6 +170,11 @@ window.SOLUTIONS_CATALOG = {
       "tags": [
         "infiltracion_ventanas"
       ],
+      "excluir_si": {
+        "cierreVentana": [
+          "fija"
+        ]
+      },
       "elemento": "ventanas",
       "impacto": "medio",
       "impacto_termico_1_10": 5,
@@ -201,13 +206,27 @@ window.SOLUTIONS_CATALOG = {
     {
       "id": "B04_sellador_silicona_perimetral",
       "nombre": "Sellado con silicona o sellador acrílico alrededor del marco",
-      "descripcion_corta": "Silicona o sellador acrílico alrededor del marco. Cierra la grieta entre el marco metálico y el muro.",
+      "descripcion_corta": "Silicona o sellador acrílico alrededor del marco. Cierra la grieta entre el marco de la ventana o puerta y el muro.",
       "categoria": "bajo_costo",
       "tags": [
         "infiltracion_ventanas",
         "marco_metalico_frio",
         "infiltracion_puerta"
       ],
+      "requiere_alguno": {
+        "sienteChiflon": [
+          true
+        ],
+        "marco": [
+          "aluminio_sin_rpt",
+          "acero"
+        ],
+        "antiguedad": [
+          "11_15",
+          "16_20",
+          "21_mas"
+        ]
+      },
       "elemento": "ventanas",
       "impacto": "medio",
       "impacto_termico_1_10": 4,
@@ -230,8 +249,8 @@ window.SOLUTIONS_CATALOG = {
         "depto_intermedio",
         "depto_primer_piso"
       ],
-      "problema_que_ataca": "Cierra la grieta entre el marco metálico y el muro, que deja pasar aire y humedad.",
-      "tip_practico": "Raspa el sellador viejo, limpia y seca bien. Aplica un cordón parejo por el exterior del marco y alisa con el dedo mojado en agua con jabón. Usa acrílico si vas a pintar encima y silicona en zonas con agua.",
+      "problema_que_ataca": "Cierra la grieta entre el marco de la ventana o puerta y el muro, que deja pasar aire frío y humedad.",
+      "tip_practico": "Raspa el sellador viejo, limpia y seca bien. Aplica un cordón parejo por el contorno del marco y alisa con el dedo mojado en agua con jabón. Usa acrílico si vas a pintar encima y silicona en zonas con agua.",
       "precaucion": "No selles los orificios de drenaje del riel de la ventana ni las rejillas de ventilación de la cocina o el baño.",
       "donde_comprar": "Sodimac, Easy, ferreterías de barrio",
       "subsidio_ds27": "no"
@@ -246,6 +265,18 @@ window.SOLUTIONS_CATALOG = {
         "infiltracion_puerta",
         "puente_termico_muro"
       ],
+      "requiere_alguno": {
+        "sienteChiflon": [
+          true
+        ],
+        "antiguedad": [
+          "16_20",
+          "21_mas"
+        ],
+        "materialMuro": [
+          "muro_aislacion_interior"
+        ]
+      },
       "elemento": "ventanas",
       "impacto": "medio",
       "impacto_termico_1_10": 4,
@@ -282,6 +313,12 @@ window.SOLUTIONS_CATALOG = {
       "tags": [
         "fuga_techo"
       ],
+      "excluir_si": {
+        "techo": [
+          "adiabatico",
+          "aislacion_alta"
+        ]
+      },
       "elemento": "techo",
       "impacto": "medio",
       "impacto_termico_1_10": 4,
@@ -299,8 +336,7 @@ window.SOLUTIONS_CATALOG = {
       "apto_arrendatario": "con_permiso",
       "aplica_a": [
         "casa_aislada",
-        "casa_pareada",
-        "depto_ultimo_piso"
+        "casa_pareada"
       ],
       "problema_que_ataca": "Evita que el aire caliente suba al entretecho en invierno por la tapa de la escotilla y por los huecos del cielo.",
       "tip_practico": "Pega burlete en el marco de la escotilla y apoya encima una plancha de poliestireno del mismo tamaño que la tapa. Sella con espuma el contorno de cañerías y cables que atraviesan el cielo.",
@@ -311,14 +347,18 @@ window.SOLUTIONS_CATALOG = {
     {
       "id": "B07_film_termico_ventana",
       "nombre": "Kit de film aislante termorretráctil para ventanas",
-      "descripcion_corta": "Film plástico termorretráctil pegado al marco, que deja una capa de aire quieto frente al vidrio. Se instala en otoño.",
+      "descripcion_corta": "Film plástico termorretráctil pegado al marco, que deja una capa de aire quieto frente al vidrio simple. Se instala en otoño.",
       "categoria": "bajo_costo",
       "tags": [
-        "vidrio_simple",
-        "marco_metalico_frio",
-        "infiltracion_ventanas",
-        "frio_orientacion_sur"
+        "vidrio_simple"
       ],
+      "excluir_si": {
+        "vidrio": [
+          "doble_ventana",
+          "dvh_basico",
+          "dvh_alto"
+        ]
+      },
       "elemento": "ventanas",
       "impacto": "medio",
       "impacto_termico_1_10": 5,
@@ -341,7 +381,7 @@ window.SOLUTIONS_CATALOG = {
         "depto_intermedio",
         "depto_primer_piso"
       ],
-      "problema_que_ataca": "Crea una capa de aire quieto frente al vidrio simple y el marco, que frena el frío y el chiflón sin cambiar la ventana.",
+      "problema_que_ataca": "Crea una capa de aire quieto frente al vidrio simple, frenando el frío y el chiflón sin cambiar la ventana.",
       "tip_practico": "Pega la cinta por el interior del marco, estira el film y dale calor con secador de pelo para que quede tenso y transparente. Se instala en otoño y se retira en primavera.",
       "precaucion": "No cubras ventanas que sean salida de emergencia o que necesites abrir seguido. Antes de retirar, despega la cinta despacio para no dañar la pintura.",
       "donde_comprar": "Sodimac, Easy, ferreterías de barrio",
@@ -389,14 +429,22 @@ window.SOLUTIONS_CATALOG = {
     },
     {
       "id": "B09_film_control_solar",
-      "nombre": "Film reflectante de control solar",
-      "descripcion_corta": "Film reflectante en el vidrio que rebota parte del sol de la tarde. Ideal para ventanas al poniente.",
+      "nombre": "Film reflectante de control solar (para vidrio simple)",
+      "descripcion_corta": "Film reflectante en el vidrio simple que rebota parte del sol de la tarde. Ideal para ventanas al poniente.",
       "categoria": "bajo_costo",
       "tags": [
         "sobrecalentamiento_poniente",
-        "falta_sombra_solar",
-        "vidrio_simple"
+        "falta_sombra_solar"
       ],
+      "excluir_si": {
+        "vidrio": [
+          "dvh_basico",
+          "dvh_alto"
+        ],
+        "orientacionPrincipal": [
+          "sur"
+        ]
+      },
       "elemento": "ventanas",
       "impacto": "alto",
       "impacto_termico_1_10": 6,
@@ -419,9 +467,9 @@ window.SOLUTIONS_CATALOG = {
         "depto_intermedio",
         "depto_primer_piso"
       ],
-      "problema_que_ataca": "Rebota parte del sol de la tarde antes de que atraviese el vidrio y caliente la pieza.",
+      "problema_que_ataca": "Rebota parte del sol de la tarde antes de que atraviese el vidrio simple y caliente la pieza.",
       "tip_practico": "Aplícalo con agua jabonosa y una espátula blanda para evitar burbujas. Parte por las ventanas al poniente. Elige film removible si arriendas.",
-      "precaucion": "Un film oscuro o muy reflectante resta luz natural y en invierno quita calor del sol. Si esa pieza necesita sol en invierno, prefiere cortina o malla que puedas sacar.",
+      "precaucion": "No apliques láminas reflectantes adhesivas sobre termopanel (DVH), porque el calor atrapado entre vidrios puede quebrar el cristal. Un film oscuro también quita sol en invierno.",
       "donde_comprar": "Sodimac, Easy, tiendas de vidrios y ferreterías",
       "subsidio_ds27": "no"
     },
@@ -434,6 +482,17 @@ window.SOLUTIONS_CATALOG = {
         "sobrecalentamiento_poniente",
         "falta_sombra_solar"
       ],
+      "excluir_si": {
+        "tieneAleroOToldo": [
+          true
+        ],
+        "nivelSombraEntorno": [
+          "muy_sombreado"
+        ],
+        "orientacionPrincipal": [
+          "sur"
+        ]
+      },
       "elemento": "entorno_solar",
       "impacto": "alto",
       "impacto_termico_1_10": 6,
@@ -465,13 +524,17 @@ window.SOLUTIONS_CATALOG = {
     {
       "id": "B11_eps_tras_muebles",
       "nombre": "Planchas de poliestireno tras muebles en muros fríos",
-      "descripcion_corta": "Planchas de poliestireno pegadas al muro tras closets o cabeceras. Aíslan los tramos de muro más fríos.",
+      "descripcion_corta": "Planchas de poliestireno pegadas al muro sin aislación tras closets o cabeceras. Aíslan los tramos de muro más fríos.",
       "categoria": "bajo_costo",
       "tags": [
-        "muro_sin_aislacion",
-        "puente_termico_muro",
-        "frio_orientacion_sur"
+        "muro_sin_aislacion"
       ],
+      "excluir_si": {
+        "materialMuro": [
+          "muro_aislacion_interior",
+          "muro_aislacion_exterior"
+        ]
+      },
       "elemento": "muros",
       "impacto": "bajo",
       "impacto_termico_1_10": 3,
@@ -494,7 +557,7 @@ window.SOLUTIONS_CATALOG = {
         "depto_intermedio",
         "depto_primer_piso"
       ],
-      "problema_que_ataca": "Agrega una capa aislante en los tramos de muro exterior donde duermes o te sientas, que son los que más sientes fríos.",
+      "problema_que_ataca": "Agrega una capa aislante en los tramos de muro exterior sin aislación donde duermes o te sientas.",
       "tip_practico": "Corta las planchas a la medida del mueble y pégalas con adhesivo de montaje. Deja un espacio de 2 a 3 cm entre el mueble y la plancha para que circule el aire.",
       "precaucion": "El poliestireno es inflamable: no lo dejes a la vista ni cerca de estufas. Tápalo siempre con el mueble, una tela gruesa o una plancha de yeso-cartón.",
       "donde_comprar": "Sodimac, Easy, ferreterías con planchas de poliestireno",
@@ -509,6 +572,11 @@ window.SOLUTIONS_CATALOG = {
         "puente_termico_muro",
         "frio_orientacion_sur"
       ],
+      "excluir_si": {
+        "materialMuro": [
+          "muro_aislacion_exterior"
+        ]
+      },
       "elemento": "muros",
       "impacto": "bajo",
       "impacto_termico_1_10": 2,
@@ -545,6 +613,13 @@ window.SOLUTIONS_CATALOG = {
       "tags": [
         "fuga_techo"
       ],
+      "excluir_si": {
+        "techo": [
+          "adiabatico",
+          "aislacion_estandar",
+          "aislacion_alta"
+        ]
+      },
       "elemento": "techo",
       "impacto": "medio",
       "impacto_termico_1_10": 5,
@@ -562,11 +637,10 @@ window.SOLUTIONS_CATALOG = {
       "apto_arrendatario": "con_permiso",
       "aplica_a": [
         "casa_aislada",
-        "casa_pareada",
-        "depto_ultimo_piso"
+        "casa_pareada"
       ],
       "problema_que_ataca": "Es una forma de partir con la aislación del techo en la pieza que más usas, mientras juntas presupuesto para cubrir toda la casa.",
-      "tip_practico": "Tiende los rollos sin comprimirlos y sin dejar huecos entre ellos. Si el entretecho ya tiene aislación, agrega una segunda capa cruzada. Revisa en la etiqueta cuántos m² cubre cada rollo.",
+      "tip_practico": "Tiende los rollos sin comprimirlos y sin dejar huecos entre ellos. Si el entretecho ya tiene aislación básica, agrega una segunda capa cruzada. Revisa en la etiqueta cuántos m² cubre cada rollo.",
       "precaucion": "Usa guantes, mascarilla, lentes y ropa que cubra la piel. Camina solo sobre las vigas, nunca sobre el cielo falso. No tapes luminarias embutidas ni cajas de conexión eléctrica.",
       "donde_comprar": "Sodimac, Easy",
       "subsidio_ds27": "consultar_ep"
@@ -580,6 +654,17 @@ window.SOLUTIONS_CATALOG = {
         "falta_sombra_solar",
         "sobrecalentamiento_poniente"
       ],
+      "excluir_si": {
+        "tieneAleroOToldo": [
+          true
+        ],
+        "nivelSombraEntorno": [
+          "muy_sombreado"
+        ],
+        "orientacionPrincipal": [
+          "sur"
+        ]
+      },
       "elemento": "entorno_solar",
       "impacto": "medio",
       "impacto_termico_1_10": 3,
@@ -652,6 +737,13 @@ window.SOLUTIONS_CATALOG = {
       "tags": [
         "fuga_techo"
       ],
+      "excluir_si": {
+        "techo": [
+          "adiabatico",
+          "aislacion_estandar",
+          "aislacion_alta"
+        ]
+      },
       "elemento": "techo",
       "impacto": "alto",
       "impacto_termico_1_10": 10,
@@ -669,10 +761,9 @@ window.SOLUTIONS_CATALOG = {
       "apto_arrendatario": "no",
       "aplica_a": [
         "casa_aislada",
-        "casa_pareada",
-        "depto_ultimo_piso"
+        "casa_pareada"
       ],
-      "problema_que_ataca": "Es la medida más efectiva para casas y departamentos de último piso: frena la pérdida de calor en invierno y el calor del techo en verano.",
+      "problema_que_ataca": "Es la medida más efectiva para casas con entretecho: frena la pérdida de calor en invierno y el calor del techo en verano.",
       "tip_practico": "Pide cotizar con aislación de 10 a 14 cm tendida sin huecos, con barrera de vapor hacia el lado interior y sin tapar la ventilación del entretecho. Un cielo bien aislado se nota desde la primera noche fría.",
       "precaucion": "Pide al maestro que revise antes la instalación eléctrica y los focos embutidos del cielo.",
       "donde_comprar": "Maestros e instaladores; materiales en Sodimac, Easy y distribuidores",
@@ -686,6 +777,13 @@ window.SOLUTIONS_CATALOG = {
       "tags": [
         "fuga_techo"
       ],
+      "excluir_si": {
+        "techo": [
+          "adiabatico",
+          "aislacion_estandar",
+          "aislacion_alta"
+        ]
+      },
       "elemento": "techo",
       "impacto": "alto",
       "impacto_termico_1_10": 9,
@@ -702,8 +800,6 @@ window.SOLUTIONS_CATALOG = {
       "hazlo_tu_mismo": false,
       "apto_arrendatario": "no",
       "aplica_a": [
-        "casa_aislada",
-        "casa_pareada",
         "depto_ultimo_piso"
       ],
       "problema_que_ataca": "Corrige el calor y el frío que pasan por una losa de hormigón o un techo plano sin aislación, típico de departamentos de último piso.",
@@ -719,9 +815,13 @@ window.SOLUTIONS_CATALOG = {
       "categoria": "alto_impacto",
       "tags": [
         "muro_sin_aislacion",
-        "puente_termico_muro",
-        "frio_orientacion_sur"
+        "puente_termico_muro"
       ],
+      "excluir_si": {
+        "materialMuro": [
+          "muro_aislacion_exterior"
+        ]
+      },
       "elemento": "muros",
       "impacto": "alto",
       "impacto_termico_1_10": 9,
@@ -745,7 +845,7 @@ window.SOLUTIONS_CATALOG = {
         "depto_primer_piso"
       ],
       "problema_que_ataca": "Envuelve el muro por fuera con una capa aislante continua, lo que también corrige los puntos fríos de pilares, vigas y esquinas.",
-      "tip_practico": "Es la mejor opción técnica para muros sin aislación, pero también la más cara. Conviene hacerla junto con otras obras de fachada. En departamentos se decide entre la comunidad.",
+      "tip_practico": "Es la mejor opción técnica para muros sin aislación, pero también la más cara. Conviene hacerla junto con otras obras de fachada o postulando a DS 27. En departamentos se decide entre la comunidad.",
       "precaucion": "Exige un maestro con experiencia comprobada en el sistema: una mala instalación se agrieta y filtra.",
       "donde_comprar": "Empresas constructoras y maestros especializados",
       "subsidio_ds27": "si"
@@ -756,9 +856,14 @@ window.SOLUTIONS_CATALOG = {
       "descripcion_corta": "Aislación y yeso-cartón por dentro del muro. Sirve cuando no se puede intervenir la fachada; resta unos 5 a 8 cm.",
       "categoria": "alto_impacto",
       "tags": [
-        "muro_sin_aislacion",
-        "frio_orientacion_sur"
+        "muro_sin_aislacion"
       ],
+      "excluir_si": {
+        "materialMuro": [
+          "muro_aislacion_interior",
+          "muro_aislacion_exterior"
+        ]
+      },
       "elemento": "muros",
       "impacto": "alto",
       "impacto_termico_1_10": 7,
@@ -781,7 +886,7 @@ window.SOLUTIONS_CATALOG = {
         "depto_intermedio",
         "depto_primer_piso"
       ],
-      "problema_que_ataca": "Mejora el muro desde adentro cuando no se puede intervenir la fachada, por ejemplo en edificios o en casas pareadas.",
+      "problema_que_ataca": "Mejora un muro sin aislación desde adentro cuando no se puede intervenir la fachada, por ejemplo en edificios o en casas pareadas.",
       "tip_practico": "Parte por la pieza más fría (dormitorio o living al sur). Se pierde algo de espacio, unos 5 a 8 cm por muro.",
       "precaucion": "Puede dejar puntos fríos en esquinas y encuentros con la losa, donde puede aparecer humedad. Por eso conviene combinarla con buena ventilación.",
       "donde_comprar": "Maestros e instaladores; materiales en Sodimac y Easy",
@@ -794,10 +899,14 @@ window.SOLUTIONS_CATALOG = {
       "categoria": "alto_impacto",
       "tags": [
         "vidrio_simple",
-        "marco_metalico_frio",
-        "infiltracion_ventanas",
-        "frio_orientacion_sur"
+        "marco_metalico_frio"
       ],
+      "excluir_si": {
+        "vidrio": [
+          "dvh_basico",
+          "dvh_alto"
+        ]
+      },
       "elemento": "ventanas",
       "impacto": "alto",
       "impacto_termico_1_10": 9,
@@ -820,7 +929,7 @@ window.SOLUTIONS_CATALOG = {
         "depto_intermedio",
         "depto_primer_piso"
       ],
-      "problema_que_ataca": "Cambia de una vez el vidrio simple, el marco metálico y las rendijas. Según el Manual CEV, el vidrio simple tiene U de 5,80 y el termopanel entre 2,80 y 3,58.",
+      "problema_que_ataca": "Cambia de una vez el vidrio simple, el marco metálico frío y las rendijas. Según el Manual CEV, el vidrio simple tiene U de 5,80 y el termopanel entre 2,80 y 3,58.",
       "tip_practico": "Parte por las ventanas del dormitorio y del lado sur, y por las de mayor tamaño. Pide ventanas proyectantes o abatibles, que sellan mejor que las correderas. Cotiza con 3 empresas.",
       "precaucion": "En departamentos, el cambio de ventanas que dan a la fachada requiere permiso de la comunidad.",
       "donde_comprar": "Empresas de ventanas PVC; cotizar en Sodimac y fabricantes",
@@ -832,10 +941,15 @@ window.SOLUTIONS_CATALOG = {
       "descripcion_corta": "Segunda ventana por dentro, sin sacar la actual. Baja el U de 5,80 a unos 3,30: alternativa más barata al termopanel.",
       "categoria": "alto_impacto",
       "tags": [
-        "vidrio_simple",
-        "marco_metalico_frio",
-        "infiltracion_ventanas"
+        "vidrio_simple"
       ],
+      "excluir_si": {
+        "vidrio": [
+          "doble_ventana",
+          "dvh_basico",
+          "dvh_alto"
+        ]
+      },
       "elemento": "ventanas",
       "impacto": "alto",
       "impacto_termico_1_10": 7,
@@ -872,6 +986,24 @@ window.SOLUTIONS_CATALOG = {
       "tags": [
         "infiltracion_ventanas"
       ],
+      "excluir_si": {
+        "cierreVentana": [
+          "fija"
+        ]
+      },
+      "requiere_alguno": {
+        "sienteChiflon": [
+          true
+        ],
+        "cierreVentana": [
+          "guillotina_antigua"
+        ],
+        "antiguedad": [
+          "11_15",
+          "16_20",
+          "21_mas"
+        ]
+      },
       "elemento": "ventanas",
       "impacto": "medio",
       "impacto_termico_1_10": 5,
@@ -895,7 +1027,7 @@ window.SOLUTIONS_CATALOG = {
         "depto_primer_piso"
       ],
       "problema_que_ataca": "Arregla ventanas correderas o de guillotina que ya no cierran bien. Mejora el sello sin cambiar todo el conjunto.",
-      "tip_practico": "Conviene si los marcos están en buen estado y solo falla el cierre. Si el marco está torcido u oxidado, mejor evalúa el cambio completo.",
+      "tip_practico": "Conviene si los marcos y vidrios están en buen estado (incluso si ya tienes termopanel) y solo falla el cierre o la felpa.",
       "precaucion": null,
       "donde_comprar": "Carpinteros, técnicos de ventanas y talleres de aluminio",
       "subsidio_ds27": "no"
@@ -908,6 +1040,11 @@ window.SOLUTIONS_CATALOG = {
       "tags": [
         "infiltracion_puerta"
       ],
+      "excluir_si": {
+        "puerta": [
+          "madera_solida"
+        ]
+      },
       "elemento": "puertas",
       "impacto": "medio",
       "impacto_termico_1_10": 6,
@@ -945,6 +1082,17 @@ window.SOLUTIONS_CATALOG = {
         "sobrecalentamiento_poniente",
         "falta_sombra_solar"
       ],
+      "excluir_si": {
+        "tieneAleroOToldo": [
+          true
+        ],
+        "nivelSombraEntorno": [
+          "muy_sombreado"
+        ],
+        "orientacionPrincipal": [
+          "sur"
+        ]
+      },
       "elemento": "entorno_solar",
       "impacto": "alto",
       "impacto_termico_1_10": 9,
@@ -982,6 +1130,17 @@ window.SOLUTIONS_CATALOG = {
         "falta_sombra_solar",
         "sobrecalentamiento_poniente"
       ],
+      "excluir_si": {
+        "tieneAleroOToldo": [
+          true
+        ],
+        "nivelSombraEntorno": [
+          "muy_sombreado"
+        ],
+        "orientacionPrincipal": [
+          "sur"
+        ]
+      },
       "elemento": "entorno_solar",
       "impacto": "alto",
       "impacto_termico_1_10": 7,
@@ -1010,11 +1169,16 @@ window.SOLUTIONS_CATALOG = {
     {
       "id": "A11_correccion_puentes_termicos_puntuales",
       "nombre": "Aislación exterior parcial en pilares, vigas y esquinas frías",
-      "descripcion_corta": "Aislación exterior solo en pilares, vigas y esquinas con humedad. Alternativa acotada a aislar todo el muro.",
+      "descripcion_corta": "Aislación exterior solo en pilares, vigas y esquinas con humedad. Alternativa acotada cuando el muro ya tiene aislación por dentro.",
       "categoria": "alto_impacto",
       "tags": [
         "puente_termico_muro"
       ],
+      "requiere_alguno": {
+        "materialMuro": [
+          "muro_aislacion_interior"
+        ]
+      },
       "elemento": "muros",
       "impacto": "medio",
       "impacto_termico_1_10": 6,
@@ -1037,11 +1201,52 @@ window.SOLUTIONS_CATALOG = {
         "depto_intermedio",
         "depto_primer_piso"
       ],
-      "problema_que_ataca": "Trata solo los puntos más fríos del muro (esquinas, pilares, vigas), donde aparece humedad y hongos aunque el resto del muro tenga aislación.",
+      "problema_que_ataca": "Trata solo los puntos más fríos del muro (esquinas, pilares, vigas), donde aparece humedad y hongos aunque el muro ya tenga aislación interior.",
       "tip_practico": "Es una alternativa más acotada que aislar todo el muro. Pide a un maestro que identifique los puntos con humedad antes de cotizar.",
       "precaucion": null,
       "donde_comprar": "Maestros e instaladores de aislación",
       "subsidio_ds27": "consultar_ep"
+    },
+    {
+      "id": "A12_aire_acondicionado_inverter",
+      "nombre": "Aire acondicionado Split Inverter (Bomba de calor aire-aire frío/calor)",
+      "descripcion_corta": "Climatización eficiente para invierno y verano. Entrega 3 a 4 veces más calor que una estufa eléctrica por el mismo consumo, bajando la cuenta mes a mes.",
+      "categoria": "alto_impacto",
+      "tags": [
+        "sobrecalentamiento_poniente",
+        "frio_orientacion_sur",
+        "fuga_techo",
+        "muro_sin_aislacion",
+        "vidrio_simple"
+      ],
+      "siempre_recomendable_eficiencia": true,
+      "elemento": "climatizacion_activa",
+      "impacto": "alto",
+      "impacto_termico_1_10": 8,
+      "temporada": "ambas",
+      "costo": {
+        "simbolo": "$$$",
+        "min_clp": 320000,
+        "max_clp": 550000,
+        "tipico_clp": 420000,
+        "unidad": "equipo + instalación certificada",
+        "caso_tipico": "Equipo Split Inverter 9.000 a 12.000 BTU (eficiencia A o superior) instalado en living o dormitorio principal"
+      },
+      "dificultad": "profesional",
+      "hazlo_tu_mismo": false,
+      "apto_arrendatario": "con_permiso",
+      "aplica_a": [
+        "casa_aislada",
+        "casa_pareada",
+        "depto_ultimo_piso",
+        "depto_intermedio",
+        "depto_primer_piso"
+      ],
+      "problema_que_ataca": "Reduce drásticamente el gasto mensual en calefacción y enfría en verano. Reconocido por el Manual CEV (Anexo B.2.2) por su alto rendimiento estacional (SCOP/COP 3,0–4,0): frente a estufas eléctricas (1:1), parafina o gas, entrega 3 a 4 kWh de calor por cada 1 kWh de electricidad, sin humedad ni contaminación intradomiciliaria.",
+      "tip_practico": "Para maximizar el ahorro mes a mes, sella primero los chiflones básicos con burletes. Elige tecnología Inverter con etiqueta SEC clase A o superior, úsalo en 20–21 °C en invierno y 24–25 °C en verano, y limpia sus filtros cada mes.",
+      "precaucion": "Requiere instalación por técnico calificado y verificar que el circuito eléctrico soporte la carga. En edificios, confirma con la administración dónde ubicar la unidad exterior.",
+      "donde_comprar": "Sodimac, Easy, retail y distribuidores de climatización",
+      "subsidio_ds27": "no"
     }
   ],
   "tips_costo_cero": [
@@ -1138,6 +1343,10 @@ window.SOLUTIONS_CATALOG = {
       "tags": [
         "fuga_techo"
       ],
+      "aplica_a": [
+        "casa_aislada",
+        "casa_pareada"
+      ],
       "temporada": "ambas",
       "momento_del_dia": "Todo el día",
       "tags_generales": false,
@@ -1195,8 +1404,7 @@ window.SOLUTIONS_CATALOG = {
       "titulo": "Cuelga una sábana clara frente al vidrio poniente",
       "tags": [
         "sobrecalentamiento_poniente",
-        "falta_sombra_solar",
-        "vidrio_simple"
+        "falta_sombra_solar"
       ],
       "temporada": "verano",
       "momento_del_dia": "Tarde",
@@ -1465,7 +1673,7 @@ window.SOLUTIONS_CATALOG = {
       "categoria": "Normativa y Metodología Técnica · MINVU",
       "titulo": "Manual Técnico para la Calificación Energética de Viviendas (CEV) en Chile",
       "entidad": "Ministerio de Vivienda y Urbanismo (DITEC - MINVU) · Versión Agosto 2025",
-      "descripcion": "Documento oficial que establece los procedimientos técnicos, tablas de transmitancia térmica (U) para vidrios, marcos y puertas, deterioro de muros antiguos, criterios de elementos adiabáticos, zonificación térmica nacional (Zona D para Santiago urbano) y la escala de calificación A+ a G en que se basa nuestra calculadora.",
+      "descripcion": "Documento oficial que establece los procedimientos técnicos, tablas de transmitancia térmica (U) para vidrios, marcos y puertas, deterioro de muros antiguos, criterios de elementos adiabáticos, bombas de calor aire-aire (Anexo B.2.2), zonificación térmica nacional (Zona D para Santiago urbano) y la escala de calificación A+ a G en que se basa nuestra calculadora.",
       "links": [
         {
           "titulo": "Abrir Manual Técnico CEV (PDF Oficial)",

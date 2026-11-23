@@ -1,4 +1,4 @@
-// Aplicación principal "Iniciativa Envuelve tu Casa"
+// Aplicación principal "Iniciativa Envuelve tu Casa" (v1.2.0 - Motor de elegibilidad estricto)
 (function () {
   const STORAGE_ANSWERS_KEY = "envuelve_answers_v1";
   const STORAGE_STEP_KEY = "envuelve_step_v1";
@@ -25,7 +25,6 @@
   let assistantOpen = false;
   let assistantMessages = [];
 
-  // Estado de pestañas separadas:
   // 1) En Diagnóstico (/resultado): soluciones personalizadas basadas en respuestas
   let activeDiagnosisSolTab = "bajo_costo"; // bajo_costo | alto_impacto
   let filterArrendatarioOnly = false;
@@ -88,6 +87,49 @@
       map[t.tag] = t;
     });
     return map;
+  }
+
+  // --- Motor estricto de elegibilidad (evita recomendar lo que el usuario YA tiene) ---
+  function isSolutionEligible(sol, input, debilidades) {
+    // 1. Verificar tipo de vivienda (ej. no recomendar lana en entretecho a departamentos)
+    if (sol.aplica_a && input.tipoVivienda && !sol.aplica_a.includes(input.tipoVivienda)) {
+      return false;
+    }
+
+    // 2. Reglas de exclusión estricta según características existentes de la vivienda
+    if (sol.excluir_si) {
+      const fields = Object.keys(sol.excluir_si);
+      for (let i = 0; i < fields.length; i++) {
+        const f = fields[i];
+        const forbidden = sol.excluir_si[f];
+        if (Array.isArray(forbidden) && forbidden.includes(input[f])) {
+          return false;
+        }
+      }
+    }
+
+    // 3. Reglas de requisito mínimo (al menos una condición real debe cumplirse)
+    if (sol.requiere_alguno) {
+      const reqFields = Object.keys(sol.requiere_alguno);
+      let anyMatch = false;
+      for (let i = 0; i < reqFields.length; i++) {
+        const f = reqFields[i];
+        const allowed = sol.requiere_alguno[f];
+        if (Array.isArray(allowed) && allowed.includes(input[f])) {
+          anyMatch = true;
+          break;
+        }
+      }
+      if (!anyMatch) return false;
+    }
+
+    // 4. Medidas de eficiencia activa (ej. Aire Acondicionado Inverter) siempre útiles para bajar gasto mensual
+    if (sol.siempre_recomendable_eficiencia) {
+      return true;
+    }
+
+    // 5. Debe corresponder al menos a una debilidad realmente detectada
+    return (sol.tags || []).some((t) => debilidades.includes(t));
   }
 
   // --- Persistencia Local ---
@@ -547,6 +589,7 @@
 
   function renderSolutionCard(sol, rankIndex) {
     const isTopPriority = rankIndex < 3;
+    const isClimatizacion = sol.elemento === "climatizacion_activa";
     return `
       <article class="bg-white rounded-2xl border ${isTopPriority ? "border-[#D96B27]/50 ring-1 ring-[#D96B27]/20" : "border-slate-200"} p-5 sm:p-6 shadow-sm flex flex-col justify-between">
         <div>
@@ -554,6 +597,11 @@
             ${
               isTopPriority
                 ? `<span class="text-xs font-bold px-2.5 py-1 rounded-full bg-[#D96B27] text-white">★ Prioridad #${rankIndex + 1}</span>`
+                : ""
+            }
+            ${
+              isClimatizacion
+                ? `<span class="text-xs font-bold px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-800 border border-indigo-200">⚡ Ahorro mensual activo</span>`
                 : ""
             }
             <span class="text-xs font-bold px-2.5 py-1 rounded-full ${
@@ -602,27 +650,21 @@
   function renderPersonalizedSolutionsSection() {
     const catalog = window.SOLUTIONS_CATALOG;
     const debilidades = lastDiagnosis.result.debilidades || [];
-    const tipoVivienda = lastDiagnosis.normalizedInput.tipoVivienda;
+    const input = lastDiagnosis.normalizedInput;
 
-    let list = catalog.soluciones.filter((s) => s.categoria === activeDiagnosisSolTab);
+    // Filtrado estricto: NUNCA hace fallback a "todas las soluciones" si ya tienes las mejoras instaladas
+    const allEligible = catalog.soluciones.filter((s) => isSolutionEligible(s, input, debilidades));
 
-    // 1. Filtrar por tipo de vivienda (ej. no recomendar techumbre en depto piso intermedio)
-    if (tipoVivienda) {
-      list = list.filter((s) => !s.aplica_a || s.aplica_a.includes(tipoVivienda));
-    }
+    const eligibleBajo = allEligible.filter((s) => s.categoria === "bajo_costo");
+    const eligibleAlto = allEligible.filter((s) => s.categoria === "alto_impacto");
 
-    // 2. Filtrar por debilidades detectadas en la encuesta
-    if (debilidades.length > 0) {
-      const matched = list.filter((s) => s.tags.some((t) => debilidades.includes(t)));
-      if (matched.length > 0) list = matched;
-    }
+    let list = activeDiagnosisSolTab === "bajo_costo" ? eligibleBajo : eligibleAlto;
 
-    // 3. Filtrar para arrendatarios si el check está activo
     if (filterArrendatarioOnly) {
       list = list.filter((s) => s.apto_arrendatario === "si" || s.apto_arrendatario === "con_permiso");
     }
 
-    // 4. Ordenar por fórmula oficial de prioridad impacto/costo (bajo costo) o impacto térmico (alto impacto)
+    // Ordenar según fórmula oficial impacto/costo (bajo costo) o impacto térmico (alto impacto)
     list = [...list].sort((a, b) => {
       if (filterArrendatarioOnly && a.apto_arrendatario !== b.apto_arrendatario) {
         return a.apto_arrendatario === "si" ? -1 : 1;
@@ -635,21 +677,40 @@
       return b.impacto_termico_1_10 - a.impacto_termico_1_10;
     });
 
-    const cardsHtml =
-      list.length === 0
-        ? `
-        <div class="bg-white rounded-2xl border border-slate-200 p-8 text-center text-slate-600">
-          <p>No hay soluciones en esta categoría con el filtro de arrendatarios activo.</p>
-          <button onclick="window.EnvuelveApp.toggleArrendatarioFilter()" class="mt-3 text-sm font-semibold text-[#D96B27] underline cursor-pointer">
-            Mostrar también soluciones con obra (para propietarios)
-          </button>
-        </div>
-      `
-        : `
+    let cardsHtml = "";
+    if (list.length === 0) {
+      if (filterArrendatarioOnly && (activeDiagnosisSolTab === "bajo_costo" ? eligibleBajo : eligibleAlto).length > 0) {
+        cardsHtml = `
+          <div class="bg-white rounded-2xl border border-slate-200 p-8 text-center text-slate-600">
+            <p class="font-semibold text-[#0F3D5E]">No hay medidas en esta pestaña bajo el filtro de arrendatarios.</p>
+            <p class="text-sm mt-1">Puedes revisar la otra pestaña o desactivar el filtro para ver obras estructurales aplicables a propietarios.</p>
+            <button onclick="window.EnvuelveApp.toggleArrendatarioFilter()" class="mt-4 px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-sm font-semibold text-[#0F3D5E] cursor-pointer">
+              Ver también soluciones para propietarios
+            </button>
+          </div>
+        `;
+      } else {
+        cardsHtml = `
+          <div class="bg-emerald-50 rounded-2xl border border-emerald-200 p-7 text-emerald-950">
+            <h3 class="font-heading font-bold text-lg text-[#1E7E5A]">✓ ¡Excelente envolvente térmica en esta categoría!</h3>
+            <p class="text-sm text-emerald-900 mt-1.5 leading-relaxed">
+              Según tus respuestas, tu vivienda ya cuenta con buenas condiciones en los puntos cubiertos por esta pestaña, por lo que <strong>no necesitas gastar dinero en soluciones redundantes</strong>.
+              ${
+                activeDiagnosisSolTab === "bajo_costo"
+                  ? `Te recomendamos revisar la pestaña <strong>Mayor Impacto</strong> (donde puedes evaluar climatización eficiente Inverter para bajar tu gasto mensual) o los <strong>Tips Útiles ($0)</strong>.`
+                  : `Puedes mantener tu confort con los <strong>Tips Útiles ($0)</strong>.`
+              }
+            </p>
+          </div>
+        `;
+      }
+    } else {
+      cardsHtml = `
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           ${list.map((sol, idx) => renderSolutionCard(sol, idx)).join("")}
         </div>
       `;
+    }
 
     return `
       <div id="soluciones-personalizadas" class="mt-10 pt-8 border-t-2 border-slate-200">
@@ -659,7 +720,7 @@
             Soluciones recomendadas para tu vivienda
           </h2>
           <p class="text-sm sm:text-base text-slate-600 mt-1">
-            Filtradas automáticamente según tus debilidades detectadas, tu tipo de vivienda y tu presupuesto, priorizando mayor impacto al menor costo.
+            Solo mostramos medidas que realmente aportan valor a tu hogar: excluimos automáticamente soluciones que ya tienes instaladas o que no aplican a tu tipo de vivienda.
           </p>
         </div>
 
@@ -668,10 +729,10 @@
           <div class="inline-flex bg-white p-1.5 rounded-2xl border border-slate-200 gap-1 w-full sm:w-auto">
             <button onclick="window.EnvuelveApp.setDiagnosisSolTab('bajo_costo')" class="flex-1 sm:flex-none px-5 py-2.5 rounded-xl text-sm font-semibold transition cursor-pointer ${
               activeDiagnosisSolTab === "bajo_costo" ? "bg-[#1E7E5A] text-white" : "text-slate-600 hover:bg-slate-100"
-            }">Bajo Costo (&lt; $30.000)</button>
+            }">Bajo Costo (&lt; $30.000) · ${eligibleBajo.length}</button>
             <button onclick="window.EnvuelveApp.setDiagnosisSolTab('alto_impacto')" class="flex-1 sm:flex-none px-5 py-2.5 rounded-xl text-sm font-semibold transition cursor-pointer ${
               activeDiagnosisSolTab === "alto_impacto" ? "bg-[#0F3D5E] text-white" : "text-slate-600 hover:bg-slate-100"
-            }">Mayor Impacto</button>
+            }">Mayor Impacto · ${eligibleAlto.length}</button>
           </div>
 
           <label class="inline-flex items-center gap-2 text-sm font-medium text-slate-700 bg-white px-4 py-2.5 rounded-xl border border-slate-200 cursor-pointer">
@@ -923,17 +984,22 @@
 
   // =========================================================================
   // VISTA 4: TIPS ÚTILES Y SUBSIDIOS VIGENTES 2026 (/tips-y-subsidios)
-  // (EXCLUSIVAMENTE TIPS SENCILLOS $0 Y SUBSIDIOS ESTATALES VIGENTES)
   // =========================================================================
   function renderTipsAndSubsidies() {
     const catalog = window.SOLUTIONS_CATALOG;
     const debilidades = lastDiagnosis ? lastDiagnosis.result.debilidades : null;
+    const tipoVivienda = lastDiagnosis ? lastDiagnosis.normalizedInput.tipoVivienda : null;
     const tenencia = lastDiagnosis ? lastDiagnosis.tenencia : "dueno";
 
     let tabContentHtml = "";
 
     if (activeTipsSubTab === "tips") {
       let tips = [...catalog.tips_costo_cero];
+
+      // Ocultar tips que no aplican al tipo de vivienda del usuario (ej. escotilla en depto)
+      if (tipoVivienda) {
+        tips = tips.filter((t) => !t.aplica_a || t.aplica_a.includes(tipoVivienda));
+      }
 
       if (debilidades && debilidades.length > 0) {
         tips.sort((a, b) => {
@@ -954,7 +1020,7 @@
             <p class="text-xs sm:text-sm text-slate-600">Hábitos cotidianos y prácticos para mejorar la temperatura de tu vivienda hoy mismo sin gastar dinero.</p>
           </div>
           <div class="inline-flex bg-slate-100 p-1 rounded-xl gap-1 text-xs font-semibold">
-            <button onclick="window.EnvuelveApp.setTipSeason('todas')" class="px-3 py-1.5 rounded-lg cursor-pointer ${tipSeasonFilter === "todas" ? "bg-[#0F3D5E] text-white" : "text-slate-600"}">Todos (${catalog.tips_costo_cero.length})</button>
+            <button onclick="window.EnvuelveApp.setTipSeason('todas')" class="px-3 py-1.5 rounded-lg cursor-pointer ${tipSeasonFilter === "todas" ? "bg-[#0F3D5E] text-white" : "text-slate-600"}">Todos (${tips.length})</button>
             <button onclick="window.EnvuelveApp.setTipSeason('invierno')" class="px-3 py-1.5 rounded-lg cursor-pointer ${tipSeasonFilter === "invierno" ? "bg-[#0F3D5E] text-white" : "text-slate-600"}">❄️ Invierno</button>
             <button onclick="window.EnvuelveApp.setTipSeason('verano')" class="px-3 py-1.5 rounded-lg cursor-pointer ${tipSeasonFilter === "verano" ? "bg-[#D96B27] text-white" : "text-slate-600"}">☀️ Verano</button>
           </div>
@@ -1484,7 +1550,6 @@
     } else if (route === "/tips-y-subsidios") {
       main.innerHTML = renderTipsAndSubsidies();
     } else if (route === "/soluciones") {
-      // Compatibilidad con rutas antiguas
       main.innerHTML = lastDiagnosis ? renderResult() : renderTipsAndSubsidies();
     } else if (route === "/documentos") {
       main.innerHTML = renderDocuments();
