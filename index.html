@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Envuelve tu Casa — Diagnóstico Térmico Residencial para Santiago</title>
-  <meta name="description" content="Diagnóstico térmico gratuito para casas y departamentos de Santiago. Mejora el confort de tu hogar con soluciones de bajo costo y subsidios estatales." />
+  <title>Iniciativa Envuelve tu Casa — Diagnóstico Térmico Residencial para Santiago</title>
+  <meta name="description" content="Descubre qué tan aislado térmicamente está tu hogar en menos de 5 minutos. Diagnóstico térmico gratuito para casas y departamentos de Santiago." />
 
   <!-- Tipografías -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -50,20 +50,21 @@
 
   <!-- Barra de Navegación -->
   <header class="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-slate-200 no-print">
-    <div class="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between gap-3">
+    <div class="max-w-5xl mx-auto px-4 min-h-16 py-2 flex flex-wrap items-center justify-between gap-3">
       <button onclick="window.EnvuelveApp.navigateTo('/')" class="flex items-center gap-2.5 text-left cursor-pointer">
-        <span class="w-9 h-9 rounded-xl bg-[#0F3D5E] text-white flex items-center justify-center font-heading font-extrabold text-lg">E</span>
+        <span class="w-9 h-9 shrink-0 rounded-xl bg-[#0F3D5E] text-white flex items-center justify-center font-heading font-extrabold text-lg">E</span>
         <div>
-          <span class="font-heading font-extrabold text-[#0F3D5E] text-base sm:text-lg block leading-none">Envuelve tu Casa</span>
-          <span class="text-[11px] text-slate-500 hidden sm:block">Diagnóstico Térmico · Santiago</span>
+          <span class="font-heading font-extrabold text-[#0F3D5E] text-sm sm:text-base block leading-tight">Iniciativa Envuelve tu Casa</span>
+          <span class="text-[11px] text-slate-500 hidden sm:block">Diagnóstico Térmico Residencial · Santiago</span>
         </div>
       </button>
 
-      <nav class="flex items-center gap-3 sm:gap-6 text-xs sm:text-sm font-medium">
+      <nav class="flex flex-wrap items-center gap-3 sm:gap-5 text-xs sm:text-sm font-medium">
         <button data-nav-link="/" onclick="window.EnvuelveApp.navigateTo('/')" class="text-slate-600 hover:text-[#0F3D5E] transition cursor-pointer">Inicio</button>
         <button data-nav-link="/encuesta" onclick="window.EnvuelveApp.navigateTo('/encuesta')" class="text-slate-600 hover:text-[#0F3D5E] transition cursor-pointer">Encuesta</button>
         <button data-nav-link="/resultado" onclick="window.EnvuelveApp.navigateTo('/resultado')" class="text-slate-600 hover:text-[#0F3D5E] transition cursor-pointer">Diagnóstico</button>
-        <button data-nav-link="/soluciones" onclick="window.EnvuelveApp.navigateTo('/soluciones')" class="text-slate-600 hover:text-[#0F3D5E] transition cursor-pointer">Soluciones</button>
+        <button data-nav-link="/soluciones" onclick="window.EnvuelveApp.navigateTo('/soluciones')" class="text-slate-600 hover:text-[#0F3D5E] transition cursor-pointer">Soluciones y Tips</button>
+        <button data-nav-link="/documentos" onclick="window.EnvuelveApp.navigateTo('/documentos')" class="text-slate-600 hover:text-[#0F3D5E] transition cursor-pointer">Documentos</button>
       </nav>
     </div>
   </header>
@@ -77,12 +78,12 @@
   <!-- Pie de página -->
   <footer class="bg-white border-t border-slate-200 py-6 mt-auto no-print">
     <div class="max-w-5xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
-      <p><strong>Envuelve tu Casa</strong> · Herramienta gratuita de pre-diagnóstico térmico para la RM (Zona Térmica D).</p>
+      <p><strong>Iniciativa Envuelve tu Casa</strong> · Herramienta gratuita de pre-diagnóstico térmico para la RM (Zona Térmica D).</p>
       <p>Metodología referencial basada en el Manual CEV (MINVU) · Estrategia Nacional de Calor y Frío.</p>
     </div>
   </footer>
 
-  <!-- Scripts de la aplicación (sin necesidad de compilación) -->
+  <!-- Scripts de la aplicación -->
   <script src="supabaseConfig.js"></script>
   <script src="thermalEngine.js"></script>
   <script src="questionsData.js"></script>
