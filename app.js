@@ -1,4 +1,4 @@
-// Aplicación principal "Envuelve tu Casa"
+// Aplicación principal "Iniciativa Envuelve tu Casa"
 (function () {
   const STORAGE_ANSWERS_KEY = "envuelve_answers_v1";
   const STORAGE_STEP_KEY = "envuelve_step_v1";
@@ -24,8 +24,15 @@
   let openHelps = {};
   let assistantOpen = false;
   let assistantMessages = [];
-  let activeSolutionTab = "mayor_impacto";
+
+  // Estado de pestañas separadas:
+  // 1) En Diagnóstico (/resultado): soluciones personalizadas basadas en respuestas
+  let activeDiagnosisSolTab = "bajo_costo"; // bajo_costo | alto_impacto
   let filterArrendatarioOnly = false;
+
+  // 2) En Tips y Subsidios (/tips-y-subsidios): solo tips útiles y subsidios vigentes 2026
+  let activeTipsSubTab = "tips"; // tips | subsidios
+  let tipSeasonFilter = "todas"; // todas | invierno | verano
 
   // --- Inicialización Supabase ---
   function initSupabase() {
@@ -62,6 +69,27 @@
     renderRoute();
   }
 
+  // --- Helpers de formato y catálogo ---
+  function formatCLP(num) {
+    if (typeof num !== "number" || isNaN(num)) return "";
+    return "$" + num.toLocaleString("es-CL");
+  }
+
+  function formatCostRange(costo) {
+    if (!costo) return "";
+    const range = `${formatCLP(costo.min_clp)} – ${formatCLP(costo.max_clp)}`;
+    return costo.unidad ? `${range} ${costo.unidad}` : range;
+  }
+
+  function getTagMap() {
+    const map = {};
+    const tags = (window.SOLUTIONS_CATALOG && window.SOLUTIONS_CATALOG.tags) || [];
+    tags.forEach((t) => {
+      map[t.tag] = t;
+    });
+    return map;
+  }
+
   // --- Persistencia Local ---
   function loadState() {
     try {
@@ -70,7 +98,14 @@
       const savedStep = localStorage.getItem(STORAGE_STEP_KEY);
       if (savedStep !== null) currentStep = Math.max(0, Math.min(4, parseInt(savedStep, 10) || 0));
       const savedResult = localStorage.getItem(STORAGE_RESULT_KEY);
-      if (savedResult) lastDiagnosis = JSON.parse(savedResult);
+      if (savedResult) {
+        lastDiagnosis = JSON.parse(savedResult);
+        filterArrendatarioOnly = lastDiagnosis.tenencia === "arrendatario";
+        activeDiagnosisSolTab =
+          lastDiagnosis.presupuesto === "bajo" || lastDiagnosis.tenencia === "arrendatario"
+            ? "bajo_costo"
+            : "alto_impacto";
+      }
     } catch (e) {
       console.warn("No se pudo leer localStorage:", e);
     }
@@ -147,9 +182,10 @@
   }
 
   function updateNavHighlight(route) {
+    const normalizedRoute = route === "/soluciones" ? (lastDiagnosis ? "/resultado" : "/tips-y-subsidios") : route;
     document.querySelectorAll("[data-nav-link]").forEach((el) => {
       const target = el.getAttribute("data-nav-link");
-      const isActive = route === target;
+      const isActive = normalizedRoute === target;
       el.classList.toggle("text-[#D96B27]", isActive);
       el.classList.toggle("font-semibold", isActive);
       el.classList.toggle("text-slate-600", !isActive);
@@ -166,15 +202,15 @@
         <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 sm:p-12">
           <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-100 text-[#0F3D5E] text-xs sm:text-sm font-semibold mb-5">
             <span class="w-2 h-2 rounded-full bg-[#1E7E5A]"></span>
-            Servicio ciudadano 100% gratuito · Santiago (Zona Térmica D)
+            Iniciativa Envuelve tu Casa · Servicio gratuito para Santiago (Zona Térmica D)
           </div>
 
           <h1 class="font-heading text-3xl sm:text-5xl font-extrabold text-[#0F3D5E] leading-tight tracking-tight max-w-3xl">
-            Descubre qué tan aislado térmicamente está tu hogar en menos de 5 minutos.
+            Descubre qué tan aislado térmicamente está tu hogar en menos de 5 minutos
           </h1>
 
           <p class="mt-4 text-base sm:text-lg text-slate-600 max-w-2xl leading-relaxed">
-            Diagnóstico térmico gratuito para <strong>casas y departamentos de Santiago</strong>. Recibe recomendaciones claras, alternativas de bajo costo y orientación para acceder a subsidios estatales.
+            Diagnóstico térmico gratuito para <strong>casas y departamentos de Santiago</strong>. Recibe un reporte personalizado con soluciones priorizadas para tu vivienda, tips útiles a costo $0 y subsidios estatales vigentes 2026.
           </p>
 
           <div class="mt-7 flex flex-col sm:flex-row gap-3">
@@ -184,7 +220,7 @@
             </button>
             ${lastDiagnosis ? `
               <button onclick="window.EnvuelveApp.navigateTo('/resultado')" class="w-full sm:w-auto px-6 py-4 rounded-xl border-2 border-[#0F3D5E] text-[#0F3D5E] hover:bg-slate-50 font-semibold text-base transition cursor-pointer">
-                Ver mi último diagnóstico (${lastDiagnosis.result.letraEstimada})
+                Ver mi diagnóstico y soluciones (${lastDiagnosis.result.letraEstimada})
               </button>
             ` : ""}
           </div>
@@ -203,33 +239,38 @@
             <div class="bg-white p-6 rounded-2xl border border-slate-200">
               <div class="w-10 h-10 rounded-xl bg-[#0F3D5E]/10 text-[#0F3D5E] font-heading font-bold flex items-center justify-center text-lg mb-4">1</div>
               <h3 class="font-heading font-bold text-lg text-[#0F3D5E]">Responde preguntas simples</h3>
-              <p class="mt-2 text-slate-600 text-sm leading-relaxed">Sobre tus muros, ventanas, techo y sol. Cada pregunta incluye trucos caseros y un asistente guiado si tienes dudas.</p>
+              <p class="mt-2 text-slate-600 text-sm leading-relaxed">Sobre tus muros, ventanas, techo y sol en menos de 5 minutos. Cada pregunta incluye trucos caseros y un asistente guiado.</p>
             </div>
             <div class="bg-white p-6 rounded-2xl border border-slate-200">
               <div class="w-10 h-10 rounded-xl bg-[#D96B27]/15 text-[#D96B27] font-heading font-bold flex items-center justify-center text-lg mb-4">2</div>
-              <h3 class="font-heading font-bold text-lg text-[#0F3D5E]">Obtén tu perfil térmico</h3>
-              <p class="mt-2 text-slate-600 text-sm leading-relaxed">Calculamos tu etiqueta estimada (A+ a G) y tu desempeño separado para invierno y verano según parámetros del Manual CEV.</p>
+              <h3 class="font-heading font-bold text-lg text-[#0F3D5E]">Obtén tu diagnóstico y soluciones</h3>
+              <p class="mt-2 text-slate-600 text-sm leading-relaxed">Calculamos tu etiqueta estimada (A+ a G) y te entregamos al instante soluciones personalizadas de bajo costo y alto impacto según tus respuestas.</p>
             </div>
             <div class="bg-white p-6 rounded-2xl border border-slate-200">
               <div class="w-10 h-10 rounded-xl bg-[#1E7E5A]/15 text-[#1E7E5A] font-heading font-bold flex items-center justify-center text-lg mb-4">3</div>
-              <h3 class="font-heading font-bold text-lg text-[#0F3D5E]">Accede a soluciones reales</h3>
-              <p class="mt-2 text-slate-600 text-sm leading-relaxed">Recibe un banco de medidas ordenadas por impacto, soluciones bajo $30.000 CLP y guía para el Subsidio DS 27 del MINVU.</p>
+              <h3 class="font-heading font-bold text-lg text-[#0F3D5E]">Revisa tips y subsidios 2026</h3>
+              <p class="mt-2 text-slate-600 text-sm leading-relaxed">Explora consejos sencillos a costo $0 y los subsidios habitacionales del MINVU vigentes para financiar mejoras en tu hogar.</p>
             </div>
           </div>
         </div>
 
-        <!-- Respaldo institucional -->
-        <div class="mt-10 bg-[#0F3D5E] text-white rounded-2xl p-6 sm:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
+        <!-- Accesos rápidos: Tips, Subsidios y Documentos -->
+        <div class="mt-10 bg-[#0F3D5E] text-white rounded-2xl p-6 sm:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div>
             <p class="text-xs uppercase tracking-wider text-sky-200 font-semibold">Innovación tecnológica con sentido social</p>
-            <h3 class="font-heading text-xl font-bold mt-1">Alineado con la Estrategia Nacional de Calor y Frío</h3>
+            <h3 class="font-heading text-xl font-bold mt-1">Respaldo técnico y política pública</h3>
             <p class="mt-2 text-sm text-sky-100 max-w-2xl leading-relaxed">
-              Metodología referencial basada en los parámetros técnicos del <strong>Manual de Calificación Energética de Viviendas (CEV - MINVU)</strong> para la Región Metropolitana. Privacidad garantizada: solo registramos datos técnicos anónimos por comuna.
+              La <strong>Iniciativa Envuelve tu Casa</strong> está alineada con la <strong>Estrategia Nacional de Calor y Frío</strong> del Ministerio de Energía y basada en el <strong>Manual Técnico CEV del MINVU</strong>. Consulta los documentos oficiales, tips útiles y subsidios vigentes 2026.
             </p>
           </div>
-          <button onclick="window.EnvuelveApp.navigateTo('/soluciones')" class="shrink-0 px-5 py-3 rounded-xl bg-white text-[#0F3D5E] font-semibold text-sm hover:bg-sky-50 transition cursor-pointer">
-            Explorar tips y subsidios
-          </button>
+          <div class="flex flex-col sm:flex-row md:flex-col gap-2.5 w-full md:w-auto shrink-0">
+            <button onclick="window.EnvuelveApp.openTipsSubTab('subsidios')" class="px-5 py-3 rounded-xl bg-[#D96B27] hover:bg-[#bf5a1d] text-white font-semibold text-sm transition cursor-pointer">
+              Ver tips y subsidios 2026
+            </button>
+            <button onclick="window.EnvuelveApp.navigateTo('/documentos')" class="px-5 py-3 rounded-xl bg-white text-[#0F3D5E] hover:bg-sky-50 font-semibold text-sm transition cursor-pointer">
+              📄 Ver Manual y Estrategia Nacional
+            </button>
+          </div>
         </div>
       </section>
     `;
@@ -403,7 +444,7 @@
               onclick="window.EnvuelveApp.submitSurvey()"
               class="flex-1 sm:flex-none px-8 py-3.5 rounded-xl bg-[#D96B27] hover:bg-[#bf5a1d] text-white font-bold text-base shadow-md transition cursor-pointer"
             >
-              Ver mi diagnóstico térmico ✓
+              Ver mi diagnóstico y soluciones ✓
             </button>
           `
           }
@@ -455,9 +496,9 @@
 
     filterArrendatarioOnly = lastDiagnosis.tenencia === "arrendatario";
     if (lastDiagnosis.presupuesto === "bajo" || lastDiagnosis.tenencia === "arrendatario") {
-      activeSolutionTab = "bajo_costo";
+      activeDiagnosisSolTab = "bajo_costo";
     } else {
-      activeSolutionTab = "mayor_impacto";
+      activeDiagnosisSolTab = "alto_impacto";
     }
 
     saveState();
@@ -482,7 +523,190 @@
   }
 
   // =========================================================================
-  // VISTA 3: DIAGNÓSTICO (/resultado)
+  // MOTOR DE RENDER DE SOLUCIONES PERSONALIZADAS (DENTRO DE /resultado)
+  // =========================================================================
+  function getArrendatarioBadge(estado) {
+    if (estado === "si") {
+      return `<span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">✓ Apto arrendatarios</span>`;
+    }
+    if (estado === "con_permiso") {
+      return `<span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-50 text-amber-800 border border-amber-200">Con permiso del dueño</span>`;
+    }
+    return `<span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-slate-100 text-slate-600">Solo propietarios</span>`;
+  }
+
+  function getSubsidioBadge(ds27) {
+    if (ds27 === "si") {
+      return `<span class="text-xs font-bold px-2.5 py-1 rounded-full bg-sky-100 text-[#0F3D5E]">Postulable DS 27</span>`;
+    }
+    if (ds27 === "consultar_ep") {
+      return `<span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-sky-50 text-sky-800">DS 27: consultar EP</span>`;
+    }
+    return "";
+  }
+
+  function renderSolutionCard(sol, rankIndex) {
+    const isTopPriority = rankIndex < 3;
+    return `
+      <article class="bg-white rounded-2xl border ${isTopPriority ? "border-[#D96B27]/50 ring-1 ring-[#D96B27]/20" : "border-slate-200"} p-5 sm:p-6 shadow-sm flex flex-col justify-between">
+        <div>
+          <div class="flex flex-wrap items-center gap-2 mb-3">
+            ${
+              isTopPriority
+                ? `<span class="text-xs font-bold px-2.5 py-1 rounded-full bg-[#D96B27] text-white">★ Prioridad #${rankIndex + 1}</span>`
+                : ""
+            }
+            <span class="text-xs font-bold px-2.5 py-1 rounded-full ${
+              sol.categoria === "bajo_costo"
+                ? "bg-emerald-50 text-[#1E7E5A]"
+                : "bg-sky-50 text-[#0F3D5E]"
+            }">Impacto ${sol.impacto} (${sol.impacto_termico_1_10}/10)</span>
+            ${getArrendatarioBadge(sol.apto_arrendatario)}
+            ${getSubsidioBadge(sol.subsidio_ds27)}
+          </div>
+
+          <h3 class="font-heading text-lg font-bold text-[#0F3D5E]">${sol.nombre}</h3>
+
+          <div class="mt-2 inline-flex flex-wrap items-center gap-2 text-xs sm:text-sm font-semibold text-slate-800 bg-slate-100 px-3 py-1.5 rounded-lg">
+            <span>💰 ${formatCostRange(sol.costo)}</span>
+          </div>
+          ${
+            sol.costo && sol.costo.caso_tipico
+              ? `<p class="text-xs text-slate-500 mt-1.5">Referencia: ${sol.costo.caso_tipico}.</p>`
+              : ""
+          }
+
+          <p class="mt-3 text-sm text-slate-700 leading-relaxed">
+            <strong class="text-[#0F3D5E]">Qué resuelve:</strong> ${sol.problema_que_ataca}
+          </p>
+
+          ${
+            sol.precaucion
+              ? `
+            <div class="mt-3 p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 leading-relaxed">
+              <strong>⚠️ Precaución:</strong> ${sol.precaucion}
+            </div>
+          `
+              : ""
+          }
+        </div>
+
+        <div class="mt-4 pt-3 border-t border-slate-100 text-xs sm:text-sm text-slate-700 bg-slate-50 -mx-5 -mb-5 sm:-mx-6 sm:-mb-6 p-4 rounded-b-2xl space-y-1.5">
+          <p><strong class="text-[#0F3D5E]">💡 Tip práctico:</strong> ${sol.tip_practico}</p>
+          ${sol.donde_comprar ? `<p class="text-xs text-slate-500"><strong>Dónde encontrarlo:</strong> ${sol.donde_comprar}</p>` : ""}
+        </div>
+      </article>
+    `;
+  }
+
+  function renderPersonalizedSolutionsSection() {
+    const catalog = window.SOLUTIONS_CATALOG;
+    const debilidades = lastDiagnosis.result.debilidades || [];
+    const tipoVivienda = lastDiagnosis.normalizedInput.tipoVivienda;
+
+    let list = catalog.soluciones.filter((s) => s.categoria === activeDiagnosisSolTab);
+
+    // 1. Filtrar por tipo de vivienda (ej. no recomendar techumbre en depto piso intermedio)
+    if (tipoVivienda) {
+      list = list.filter((s) => !s.aplica_a || s.aplica_a.includes(tipoVivienda));
+    }
+
+    // 2. Filtrar por debilidades detectadas en la encuesta
+    if (debilidades.length > 0) {
+      const matched = list.filter((s) => s.tags.some((t) => debilidades.includes(t)));
+      if (matched.length > 0) list = matched;
+    }
+
+    // 3. Filtrar para arrendatarios si el check está activo
+    if (filterArrendatarioOnly) {
+      list = list.filter((s) => s.apto_arrendatario === "si" || s.apto_arrendatario === "con_permiso");
+    }
+
+    // 4. Ordenar por fórmula oficial de prioridad impacto/costo (bajo costo) o impacto térmico (alto impacto)
+    list = [...list].sort((a, b) => {
+      if (filterArrendatarioOnly && a.apto_arrendatario !== b.apto_arrendatario) {
+        return a.apto_arrendatario === "si" ? -1 : 1;
+      }
+      if (activeDiagnosisSolTab === "bajo_costo") {
+        const pA = a.impacto_termico_1_10 / ((a.costo.tipico_clp || 10000) / 10000);
+        const pB = b.impacto_termico_1_10 / ((b.costo.tipico_clp || 10000) / 10000);
+        return pB - pA;
+      }
+      return b.impacto_termico_1_10 - a.impacto_termico_1_10;
+    });
+
+    const cardsHtml =
+      list.length === 0
+        ? `
+        <div class="bg-white rounded-2xl border border-slate-200 p-8 text-center text-slate-600">
+          <p>No hay soluciones en esta categoría con el filtro de arrendatarios activo.</p>
+          <button onclick="window.EnvuelveApp.toggleArrendatarioFilter()" class="mt-3 text-sm font-semibold text-[#D96B27] underline cursor-pointer">
+            Mostrar también soluciones con obra (para propietarios)
+          </button>
+        </div>
+      `
+        : `
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          ${list.map((sol, idx) => renderSolutionCard(sol, idx)).join("")}
+        </div>
+      `;
+
+    return `
+      <div id="soluciones-personalizadas" class="mt-10 pt-8 border-t-2 border-slate-200">
+        <div class="mb-5">
+          <span class="text-xs font-bold uppercase tracking-wider text-[#1E7E5A]">Banco personalizado según tus respuestas</span>
+          <h2 class="font-heading text-2xl sm:text-3xl font-extrabold text-[#0F3D5E] mt-1">
+            Soluciones recomendadas para tu vivienda
+          </h2>
+          <p class="text-sm sm:text-base text-slate-600 mt-1">
+            Filtradas automáticamente según tus debilidades detectadas, tu tipo de vivienda y tu presupuesto, priorizando mayor impacto al menor costo.
+          </p>
+        </div>
+
+        <!-- Selector Bajo Costo / Mayor Impacto + Filtro Arrendatario -->
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-5 no-print">
+          <div class="inline-flex bg-white p-1.5 rounded-2xl border border-slate-200 gap-1 w-full sm:w-auto">
+            <button onclick="window.EnvuelveApp.setDiagnosisSolTab('bajo_costo')" class="flex-1 sm:flex-none px-5 py-2.5 rounded-xl text-sm font-semibold transition cursor-pointer ${
+              activeDiagnosisSolTab === "bajo_costo" ? "bg-[#1E7E5A] text-white" : "text-slate-600 hover:bg-slate-100"
+            }">Bajo Costo (&lt; $30.000)</button>
+            <button onclick="window.EnvuelveApp.setDiagnosisSolTab('alto_impacto')" class="flex-1 sm:flex-none px-5 py-2.5 rounded-xl text-sm font-semibold transition cursor-pointer ${
+              activeDiagnosisSolTab === "alto_impacto" ? "bg-[#0F3D5E] text-white" : "text-slate-600 hover:bg-slate-100"
+            }">Mayor Impacto</button>
+          </div>
+
+          <label class="inline-flex items-center gap-2 text-sm font-medium text-slate-700 bg-white px-4 py-2.5 rounded-xl border border-slate-200 cursor-pointer">
+            <input type="checkbox" ${filterArrendatarioOnly ? "checked" : ""} onchange="window.EnvuelveApp.toggleArrendatarioFilter()" class="w-4 h-4 accent-[#0F3D5E]" />
+            <span>Solo aptas para arrendatarios</span>
+          </label>
+        </div>
+
+        <div class="mb-4 p-3.5 rounded-xl bg-slate-100 border border-slate-200 text-xs text-slate-600">
+          <strong>Sobre los precios:</strong> ${catalog.meta.advertencia_precios}
+        </div>
+
+        ${cardsHtml}
+
+        <!-- Puente hacia Tips y Subsidios -->
+        <div class="mt-7 p-5 rounded-2xl bg-[#0F3D5E] text-white flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 no-print">
+          <div>
+            <p class="font-heading font-bold text-base">¿Buscas consejos a costo $0 o financiamiento estatal?</p>
+            <p class="text-xs sm:text-sm text-sky-100 mt-0.5">Revisa los tips diarios sencillos y los subsidios del MINVU vigentes en 2026.</p>
+          </div>
+          <div class="flex flex-wrap gap-2 shrink-0">
+            <button onclick="window.EnvuelveApp.openTipsSubTab('tips')" class="px-4 py-2.5 rounded-xl bg-white text-[#0F3D5E] font-semibold text-sm hover:bg-sky-50 transition cursor-pointer">
+              Ver Tips ($0)
+            </button>
+            <button onclick="window.EnvuelveApp.openTipsSubTab('subsidios')" class="px-4 py-2.5 rounded-xl bg-[#D96B27] hover:bg-[#bf5a1d] text-white font-semibold text-sm transition cursor-pointer">
+              Ver Subsidios 2026 →
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  // =========================================================================
+  // VISTA 3: DIAGNÓSTICO + SOLUCIONES PERSONALIZADAS (/resultado)
   // =========================================================================
   function renderResult() {
     if (!lastDiagnosis) {
@@ -490,7 +714,7 @@
         <section class="max-w-2xl mx-auto px-4 py-16 text-center">
           <div class="bg-white rounded-2xl border border-slate-200 p-8">
             <h2 class="font-heading text-2xl font-bold text-[#0F3D5E]">Aún no has completado tu evaluación</h2>
-            <p class="mt-2 text-slate-600">Responde la encuesta de 3 minutos para conocer el nivel de aislación térmica de tu vivienda.</p>
+            <p class="mt-2 text-slate-600">Responde la encuesta en menos de 5 minutos para conocer el nivel de aislación térmica de tu vivienda y recibir tus soluciones personalizadas.</p>
             <button onclick="window.EnvuelveApp.navigateTo('/encuesta')" class="mt-6 px-6 py-3.5 rounded-xl bg-[#D96B27] text-white font-semibold cursor-pointer">
               Ir a la encuesta
             </button>
@@ -502,6 +726,7 @@
     const { result, normalizedInput, estimatedFieldsCount } = lastDiagnosis;
     const invStyle = scoreColor(result.puntajeInvierno);
     const verStyle = scoreColor(result.puntajeVerano);
+    const tagMap = getTagMap();
 
     const cevBars = CEV_LEVELS.map((lvl, idx) => {
       const isCurrent = lvl.letter === result.letraEstimada;
@@ -558,15 +783,28 @@
       })
       .join("");
 
+    const weaknessCardsHtml = (result.debilidades || [])
+      .map((tag) => {
+        const info = tagMap[tag];
+        if (!info) return "";
+        return `
+          <div class="p-3.5 rounded-xl bg-amber-50/70 border border-amber-200">
+            <p class="font-semibold text-sm text-[#0F3D5E]">• ${info.etiqueta_usuario}</p>
+            <p class="text-xs text-slate-600 mt-1">${info.explicacion}</p>
+          </div>
+        `;
+      })
+      .join("");
+
     const whatsappText = encodeURIComponent(
-      `🏠 Diagnóstico Térmico "Envuelve tu Casa" (${normalizedInput.comuna}):\n` +
+      `🏠 Diagnóstico Térmico "Iniciativa Envuelve tu Casa" (${normalizedInput.comuna}):\n` +
       `• Etiqueta estimada CEV: ${result.letraEstimada} (${result.ahorroEstimadoPct >= 0 ? "+" : ""}${result.ahorroEstimadoPct}% vs estándar base)\n` +
       `• Confort Invierno: ${result.puntajeInvierno}/100 | Protección Verano: ${result.puntajeVerano}/100\n` +
       `• U estimado ventanas: ${result.uVentanaEstimado} W/m²K`
     );
 
     return `
-      <section class="max-w-4xl mx-auto px-4 pt-6 pb-16">
+      <section class="max-w-5xl mx-auto px-4 pt-6 pb-16">
         <div class="flex flex-wrap items-center justify-between gap-3 mb-5 no-print">
           <div>
             <span class="text-xs font-bold uppercase tracking-wider text-[#1E7E5A]">Zona Térmica D · ${normalizedInput.comuna}</span>
@@ -644,17 +882,30 @@
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             ${componentsHtml}
           </div>
+
+          ${
+            weaknessCardsHtml
+              ? `
+            <div class="mt-6 pt-5 border-t border-slate-100">
+              <h3 class="font-heading text-base font-bold text-[#0F3D5E] mb-3">Principales hallazgos detectados en tu vivienda</h3>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                ${weaknessCardsHtml}
+              </div>
+            </div>
+          `
+              : ""
+          }
         </div>
 
         <!-- Aviso legal/metodológico -->
         <div class="mt-6 p-4 rounded-2xl bg-slate-100 border border-slate-200 text-xs sm:text-sm text-slate-600 leading-relaxed">
-          <strong>Transparencia metodológica:</strong> Pre-diagnóstico orientativo basado en parámetros del <em>Manual Técnico de Calificación Energética de Viviendas (CEV - MINVU)</em> para Zona Térmica D (Santiago). No reemplaza una certificación oficial realizada por un Evaluador Energético acreditado.
+          <strong>Transparencia metodológica:</strong> ${window.SOLUTIONS_CATALOG.meta.aviso_legal_ui} Basado en parámetros del <em>Manual Técnico CEV (MINVU)</em> para Zona Térmica D (Santiago).
         </div>
 
-        <!-- Acciones -->
-        <div class="mt-7 flex flex-col sm:flex-row gap-3 no-print">
-          <button onclick="window.EnvuelveApp.navigateTo('/soluciones')" class="flex-1 px-7 py-4 rounded-xl bg-[#D96B27] hover:bg-[#bf5a1d] text-white font-bold text-base shadow-md transition cursor-pointer">
-            Ver soluciones recomendadas para mi casa →
+        <!-- Acciones rápidas de reporte -->
+        <div class="mt-6 flex flex-col sm:flex-row gap-3 no-print">
+          <button onclick="document.getElementById('soluciones-personalizadas').scrollIntoView({ behavior: 'smooth' })" class="flex-1 px-7 py-4 rounded-xl bg-[#D96B27] hover:bg-[#bf5a1d] text-white font-bold text-base shadow-md transition cursor-pointer">
+            ↓ Ver mis soluciones personalizadas
           </button>
           <button onclick="window.print()" class="px-6 py-4 rounded-xl border-2 border-[#0F3D5E] text-[#0F3D5E] hover:bg-slate-50 font-semibold text-base transition cursor-pointer">
             🖨️ Guardar PDF / Imprimir
@@ -663,179 +914,285 @@
             Compartir WhatsApp
           </a>
         </div>
+
+        <!-- SISTEMA DE SOLUCIONES PERSONALIZADAS BASADO EN LAS RESPUESTAS -->
+        ${renderPersonalizedSolutionsSection()}
       </section>
     `;
   }
 
   // =========================================================================
-  // VISTA 4: SOLUCIONES Y TIPS (/soluciones)
+  // VISTA 4: TIPS ÚTILES Y SUBSIDIOS VIGENTES 2026 (/tips-y-subsidios)
+  // (EXCLUSIVAMENTE TIPS SENCILLOS $0 Y SUBSIDIOS ESTATALES VIGENTES)
   // =========================================================================
-  function renderSolutions() {
+  function renderTipsAndSubsidies() {
     const catalog = window.SOLUTIONS_CATALOG;
     const debilidades = lastDiagnosis ? lastDiagnosis.result.debilidades : null;
     const tenencia = lastDiagnosis ? lastDiagnosis.tenencia : "dueno";
 
-    let matchedSolutions = catalog.solutions;
-    if (debilidades && debilidades.length > 0) {
-      matchedSolutions = catalog.solutions.filter((s) =>
-        s.tags.some((t) => debilidades.includes(t))
-      );
-      if (matchedSolutions.length === 0) matchedSolutions = catalog.solutions;
-    }
-
-    if (filterArrendatarioOnly && activeSolutionTab !== "subsidios") {
-      matchedSolutions = matchedSolutions.filter((s) => s.aptaArrendatario);
-    }
-
-    const tabSolutions = matchedSolutions.filter((s) => s.categoria === activeSolutionTab);
-
     let tabContentHtml = "";
-    if (activeSolutionTab === "subsidios") {
-      const sub = catalog.subsidioDS27;
+
+    if (activeTipsSubTab === "tips") {
+      let tips = [...catalog.tips_costo_cero];
+
+      if (debilidades && debilidades.length > 0) {
+        tips.sort((a, b) => {
+          const matchA = a.tags.some((t) => debilidades.includes(t)) ? 1 : 0;
+          const matchB = b.tags.some((t) => debilidades.includes(t)) ? 1 : 0;
+          return matchB - matchA;
+        });
+      }
+
+      if (tipSeasonFilter !== "todas") {
+        tips = tips.filter((t) => t.temporada === tipSeasonFilter || t.temporada === "ambas");
+      }
+
       tabContentHtml = `
-        <div class="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-sm">
-          <div class="inline-block px-3 py-1 rounded-full bg-emerald-50 text-[#1E7E5A] text-xs font-bold mb-3">
-            Financiamiento Estatal · MINVU
+        <div class="mb-5 flex flex-wrap items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200">
+          <div>
+            <h2 class="font-heading text-lg font-bold text-[#0F3D5E]">Tips útiles y sencillos a costo $0</h2>
+            <p class="text-xs sm:text-sm text-slate-600">Hábitos cotidianos y prácticos para mejorar la temperatura de tu vivienda hoy mismo sin gastar dinero.</p>
           </div>
-          <h2 class="font-heading text-2xl font-bold text-[#0F3D5E]">${sub.titulo}</h2>
-          <p class="text-slate-600 mt-2 leading-relaxed">${sub.descripcion}</p>
-
-          ${
-            tenencia === "arrendatario"
-              ? `<div class="mt-4 p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-sm">${sub.notaArrendatarios}</div>`
-              : ""
-          }
-
-          <h3 class="font-heading font-bold text-[#0F3D5E] mt-6 mb-3">Requisitos principales referenciales:</h3>
-          <ul class="space-y-2 text-sm sm:text-base text-slate-700">
-            ${sub.requisitos.map((r) => `<li class="flex items-start gap-2"><span class="text-[#1E7E5A] font-bold">✓</span><span>${r}</span></li>`).join("")}
-          </ul>
-
-          <div class="mt-6">
-            <a href="${sub.urlOficial}" target="_blank" rel="noopener" class="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-[#0F3D5E] hover:bg-[#0a2c45] text-white font-semibold text-sm sm:text-base transition">
-              Ir al portal oficial del MINVU ↗
-            </a>
+          <div class="inline-flex bg-slate-100 p-1 rounded-xl gap-1 text-xs font-semibold">
+            <button onclick="window.EnvuelveApp.setTipSeason('todas')" class="px-3 py-1.5 rounded-lg cursor-pointer ${tipSeasonFilter === "todas" ? "bg-[#0F3D5E] text-white" : "text-slate-600"}">Todos (${catalog.tips_costo_cero.length})</button>
+            <button onclick="window.EnvuelveApp.setTipSeason('invierno')" class="px-3 py-1.5 rounded-lg cursor-pointer ${tipSeasonFilter === "invierno" ? "bg-[#0F3D5E] text-white" : "text-slate-600"}">❄️ Invierno</button>
+            <button onclick="window.EnvuelveApp.setTipSeason('verano')" class="px-3 py-1.5 rounded-lg cursor-pointer ${tipSeasonFilter === "verano" ? "bg-[#D96B27] text-white" : "text-slate-600"}">☀️ Verano</button>
           </div>
         </div>
-      `;
-    } else if (tabSolutions.length === 0) {
-      tabContentHtml = `
-        <div class="bg-white rounded-2xl border border-slate-200 p-8 text-center text-slate-600">
-          <p>No hay soluciones en esta categoría con el filtro actual.</p>
-          ${
-            filterArrendatarioOnly
-              ? `<button onclick="window.EnvuelveApp.toggleArrendatarioFilter()" class="mt-3 text-sm font-semibold text-[#D96B27] underline cursor-pointer">Ver también soluciones con obra (para propietarios)</button>`
-              : ""
-          }
-        </div>
-      `;
-    } else {
-      tabContentHtml = `
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          ${tabSolutions
-            .map(
-              (sol) => `
-            <article class="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-sm flex flex-col justify-between">
-              <div>
-                <div class="flex flex-wrap items-center gap-2 mb-3">
-                  <span class="text-xs font-bold px-2.5 py-1 rounded-full ${
-                    sol.categoria === "bajo_costo"
-                      ? "bg-emerald-50 text-[#1E7E5A]"
-                      : "bg-sky-50 text-[#0F3D5E]"
-                  }">Impacto: ${sol.impacto}</span>
-                  <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-slate-100 text-slate-700">${sol.costoCLP}</span>
-                  ${
-                    sol.aptaArrendatario
-                      ? `<span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-50 text-amber-800">Sin obras / Arrendatarios</span>`
-                      : ""
-                  }
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+          ${tips
+            .map((tip, idx) => {
+              const isRelevant = debilidades && debilidades.length > 0 && tip.tags.some((t) => debilidades.includes(t));
+              const seasonBadge =
+                tip.temporada === "verano"
+                  ? `<span class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-800">☀️ Verano</span>`
+                  : tip.temporada === "invierno"
+                  ? `<span class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-sky-50 text-sky-800">❄️ Invierno</span>`
+                  : `<span class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800">Todo el año</span>`;
+              return `
+                <div class="bg-white rounded-2xl border ${isRelevant ? "border-[#1E7E5A]/50" : "border-slate-200"} p-5 shadow-sm">
+                  <div class="flex items-start gap-3">
+                    <span class="w-7 h-7 shrink-0 rounded-full bg-[#1E7E5A] text-white text-xs font-bold flex items-center justify-center mt-0.5">${idx + 1}</span>
+                    <div class="flex-1">
+                      <div class="flex flex-wrap items-center gap-1.5 mb-1.5">
+                        ${seasonBadge}
+                        <span class="text-[11px] font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">🕒 ${tip.momento_del_dia}</span>
+                        ${isRelevant ? `<span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-900">Útil para tu diagnóstico</span>` : ""}
+                      </div>
+                      <h3 class="font-heading font-bold text-[#0F3D5E] text-base">${tip.titulo}</h3>
+                      <p class="text-sm text-slate-600 mt-1.5 leading-relaxed">${tip.descripcion}</p>
+                    </div>
+                  </div>
                 </div>
-                <h3 class="font-heading text-lg font-bold text-[#0F3D5E]">${sol.nombre}</h3>
-                <p class="mt-2 text-sm text-slate-600 leading-relaxed">${sol.descripcion}</p>
-              </div>
-              <div class="mt-4 pt-3 border-t border-slate-100 text-xs sm:text-sm text-slate-700 bg-slate-50 -mx-5 -mb-5 sm:-mx-6 sm:-mb-6 p-4 rounded-b-2xl">
-                <strong class="text-[#0F3D5E]">Tip práctico:</strong> ${sol.tip}
-              </div>
-            </article>
-          `
-            )
+              `;
+            })
             .join("")}
         </div>
       `;
-    }
+    } else {
+      const subData = catalog.subsidios;
 
-    const tipsHtml = catalog.tipsCostoCero
-      .map(
-        (tip, i) => `
-        <div class="bg-white rounded-2xl border border-slate-200 p-5">
-          <div class="flex items-start gap-3">
-            <span class="w-7 h-7 shrink-0 rounded-full bg-[#1E7E5A] text-white text-xs font-bold flex items-center justify-center mt-0.5">${i + 1}</span>
-            <div>
-              <h4 class="font-heading font-bold text-[#0F3D5E] text-base">${tip.titulo}</h4>
-              <p class="text-sm text-slate-600 mt-1 leading-relaxed">${tip.texto}</p>
+      const checklistHtml = subData.checklist_preliminar_ui
+        .map(
+          (item, i) => `
+          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+            <p class="font-semibold text-sm text-[#0F3D5E]">${i + 1}. ${item.pregunta}</p>
+            <p class="text-xs sm:text-sm text-slate-600 mt-1">${item.si_no}</p>
+          </div>
+        `
+        )
+        .join("");
+
+      const fichasHtml = subData.fichas
+        .map(
+          (f) => `
+          <article class="bg-white rounded-3xl border ${f.vigente_ahora ? "border-[#1E7E5A] ring-2 ring-[#1E7E5A]/15" : "border-slate-200"} p-6 sm:p-8 shadow-sm">
+            <div class="flex flex-wrap items-center gap-2 mb-3">
+              <span class="px-3 py-1 rounded-full text-xs font-bold ${
+                f.vigente_ahora
+                  ? "bg-[#1E7E5A] text-white"
+                  : "bg-slate-200 text-slate-700"
+              }">${f.vigencia_badge}</span>
+              <span class="px-3 py-1 rounded-full text-xs font-semibold bg-sky-50 text-[#0F3D5E]">${f.organismo}</span>
+            </div>
+
+            <h2 class="font-heading text-xl sm:text-2xl font-bold text-[#0F3D5E]">${f.nombre}</h2>
+            <p class="text-sm font-semibold ${f.vigente_ahora ? "text-[#1E7E5A]" : "text-amber-800"} mt-2">${f.estado}</p>
+            <p class="text-sm sm:text-base text-slate-600 mt-2 leading-relaxed">${f.resumen}</p>
+
+            <div class="mt-5 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200">
+                <h3 class="font-heading font-bold text-sm text-[#0F3D5E] mb-2">¿Qué obras financia?</h3>
+                <ul class="space-y-1.5 text-xs sm:text-sm text-slate-700">
+                  ${f.que_financia.map((item) => `<li class="flex items-start gap-2"><span class="text-[#1E7E5A] font-bold">✓</span><span>${item}</span></li>`).join("")}
+                </ul>
+              </div>
+
+              <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+                <div>
+                  <h3 class="font-heading font-bold text-sm text-[#0F3D5E] mb-1">Ahorro mínimo y montos</h3>
+                  <p class="text-xs sm:text-sm text-slate-700">${f.ahorro_minimo_familia}</p>
+                </div>
+                <div>
+                  <h3 class="font-heading font-bold text-sm text-[#0F3D5E] mb-1">Requisitos principales</h3>
+                  <ul class="space-y-1 text-xs sm:text-sm text-slate-700">
+                    ${f.requisitos_postulante.map((r) => `<li>• ${r}</li>`).join("")}
+                    ${f.requisitos_vivienda.map((r) => `<li>• ${r}</li>`).join("")}
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-4 p-4 rounded-2xl bg-sky-50/70 border border-sky-200">
+              <h3 class="font-heading font-bold text-sm text-[#0F3D5E] mb-1.5">Cómo postular paso a paso</h3>
+              <ul class="space-y-1 text-xs sm:text-sm text-slate-700">
+                ${f.como_se_postula.map((step) => `<li>${step}</li>`).join("")}
+              </ul>
+            </div>
+
+            <div class="mt-5 flex flex-wrap gap-2.5">
+              ${f.links
+                .map(
+                  (lnk, idx) => `
+                <a href="${lnk.url}" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition ${
+                  idx === 0
+                    ? "bg-[#0F3D5E] hover:bg-[#0a2c45] text-white"
+                    : "bg-slate-100 hover:bg-slate-200 text-[#0F3D5E]"
+                }">
+                  <span>${lnk.titulo}</span>
+                  <span>↗</span>
+                </a>
+              `
+                )
+                .join("")}
+            </div>
+          </article>
+        `
+        )
+        .join("");
+
+      tabContentHtml = `
+        <div class="space-y-6">
+          <div class="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-xs sm:text-sm text-amber-900">
+            <strong>Verificado a noviembre 2026:</strong> ${subData.aviso}
+          </div>
+
+          ${
+            tenencia === "arrendatario"
+              ? `
+            <div class="p-4 rounded-2xl bg-sky-50 border border-sky-200 text-sm text-[#0F3D5E]">
+              <strong>Nota para arrendatarios:</strong> Los subsidios de mejoramiento del MINVU exigen ser propietario o asignatario. Puedes revisar tus medidas removibles en <strong>Diagnóstico</strong> o compartir tu reporte con el propietario.
+            </div>
+          `
+              : ""
+          }
+
+          ${fichasHtml}
+
+          <!-- Checklist preliminar -->
+          <div class="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-sm">
+            <h3 class="font-heading text-xl font-bold text-[#0F3D5E]">Checklist rápido antes de postular</h3>
+            <p class="text-sm text-slate-600 mt-1 mb-4">Revisa estas 4 preguntas básicas para saber por dónde partir:</p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              ${checklistHtml}
             </div>
           </div>
         </div>
+      `;
+    }
+
+    return `
+      <section class="max-w-5xl mx-auto px-4 pt-6 pb-16">
+        <div class="mb-6">
+          <span class="text-xs font-bold uppercase tracking-wider text-[#1E7E5A]">Consejos a costo $0 y financiamiento estatal</span>
+          <h1 class="font-heading text-2xl sm:text-3xl font-extrabold text-[#0F3D5E] mt-1">
+            Tips Útiles y Subsidios Vigentes 2026
+          </h1>
+          <p class="text-sm sm:text-base text-slate-600 mt-1">
+            Aquí reunimos consejos sencillos para aplicar hoy sin costo y los subsidios habitacionales del MINVU disponibles en 2026.
+            ${
+              lastDiagnosis
+                ? `<button onclick="window.EnvuelveApp.navigateTo('/resultado')" class="text-[#D96B27] font-semibold underline cursor-pointer ml-1">Volver a mi diagnóstico y soluciones personalizadas</button>`
+                : `<button onclick="window.EnvuelveApp.navigateTo('/encuesta')" class="text-[#D96B27] font-semibold underline cursor-pointer ml-1">Haz la encuesta para ver soluciones personalizadas</button>`
+            }
+          </p>
+        </div>
+
+        <!-- Solo 2 pestañas: Tips Útiles y Subsidios 2026 -->
+        <div class="mb-6">
+          <div class="inline-flex bg-white p-1.5 rounded-2xl border border-slate-200 gap-1 w-full sm:w-auto">
+            <button onclick="window.EnvuelveApp.setTipsSubTab('tips')" class="flex-1 sm:flex-none px-6 py-2.5 rounded-xl text-sm font-semibold transition cursor-pointer ${
+              activeTipsSubTab === "tips" ? "bg-[#1E7E5A] text-white" : "text-slate-600 hover:bg-slate-100"
+            }">Tips Útiles ($0)</button>
+            <button onclick="window.EnvuelveApp.setTipsSubTab('subsidios')" class="flex-1 sm:flex-none px-6 py-2.5 rounded-xl text-sm font-semibold transition cursor-pointer ${
+              activeTipsSubTab === "subsidios" ? "bg-[#D96B27] text-white" : "text-slate-600 hover:bg-slate-100"
+            }">Subsidios MINVU 2026</button>
+          </div>
+        </div>
+
+        ${tabContentHtml}
+      </section>
+    `;
+  }
+
+  // =========================================================================
+  // VISTA 5: DOCUMENTOS OFICIALES (/documentos)
+  // =========================================================================
+  function renderDocuments() {
+    const docs = window.SOLUTIONS_CATALOG.documentos_oficiales || [];
+
+    const cardsHtml = docs
+      .map(
+        (doc) => `
+        <article class="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-sm">
+          <span class="inline-block px-3 py-1 rounded-full bg-sky-50 text-[#0F3D5E] text-xs font-bold mb-3">
+            ${doc.categoria}
+          </span>
+          <h2 class="font-heading text-xl sm:text-2xl font-bold text-[#0F3D5E]">${doc.titulo}</h2>
+          <p class="text-xs sm:text-sm font-semibold text-[#1E7E5A] mt-1">${doc.entidad}</p>
+          <p class="mt-3 text-sm sm:text-base text-slate-600 leading-relaxed">${doc.descripcion}</p>
+
+          <div class="mt-5 flex flex-wrap gap-3">
+            ${doc.links
+              .map(
+                (lnk) => `
+              <a href="${lnk.url}" target="_blank" rel="noopener" class="inline-flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold transition ${
+                lnk.primario
+                  ? "bg-[#0F3D5E] hover:bg-[#0a2c45] text-white"
+                  : "bg-slate-100 hover:bg-slate-200 text-[#0F3D5E]"
+              }">
+                <span>📄 ${lnk.titulo}</span>
+                <span>↗</span>
+              </a>
+            `
+              )
+              .join("")}
+          </div>
+        </article>
       `
       )
       .join("");
 
     return `
-      <section class="max-w-5xl mx-auto px-4 pt-6 pb-16">
+      <section class="max-w-4xl mx-auto px-4 pt-6 pb-16">
         <div class="mb-6">
-          <span class="text-xs font-bold uppercase tracking-wider text-[#1E7E5A]">Banco de soluciones priorizadas</span>
-          <h1 class="font-heading text-2xl sm:text-3xl font-extrabold text-[#0F3D5E] mt-1">
-            ${lastDiagnosis ? "Soluciones recomendadas para tu vivienda" : "Soluciones y tips de confort térmico"}
-          </h1>
-          ${
-            lastDiagnosis
-              ? `<p class="text-sm sm:text-base text-slate-600 mt-1">Filtradas según los puntos críticos detectados en tu diagnóstico (Etiqueta estimada <strong>${lastDiagnosis.result.letraEstimada}</strong>).</p>`
-              : `<p class="text-sm sm:text-base text-slate-600 mt-1">Explora medidas generales o <button onclick="window.EnvuelveApp.navigateTo('/encuesta')" class="text-[#D96B27] font-semibold underline cursor-pointer">haz el diagnóstico</button> para personalizarlas a tu casa.</p>`
-          }
+          <span class="text-xs font-bold uppercase tracking-wider text-[#D96B27]">Transparencia y respaldo técnico</span>
+          <h1 class="font-heading text-2xl sm:text-3xl font-extrabold text-[#0F3D5E] mt-1">Documentos Oficiales de Referencia</h1>
+          <p class="text-sm sm:text-base text-slate-600 mt-2">
+            Accede directamente al <strong>Manual Técnico CEV del MINVU</strong>, a la <strong>Estrategia Nacional de Calor y Frío</strong> del Ministerio de Energía y a la normativa oficial de subsidios 2026 que sustentan la Iniciativa Envuelve tu Casa.
+          </p>
         </div>
 
-        <!-- Pestañas -->
-        <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
-          <div class="inline-flex bg-white p-1.5 rounded-2xl border border-slate-200 gap-1 w-full sm:w-auto overflow-x-auto">
-            <button onclick="window.EnvuelveApp.setSolutionTab('mayor_impacto')" class="flex-1 sm:flex-none px-4 py-2.5 rounded-xl text-sm font-semibold transition cursor-pointer ${
-              activeSolutionTab === "mayor_impacto" ? "bg-[#0F3D5E] text-white" : "text-slate-600 hover:bg-slate-100"
-            }">Mayor Impacto</button>
-            <button onclick="window.EnvuelveApp.setSolutionTab('bajo_costo')" class="flex-1 sm:flex-none px-4 py-2.5 rounded-xl text-sm font-semibold transition cursor-pointer ${
-              activeSolutionTab === "bajo_costo" ? "bg-[#1E7E5A] text-white" : "text-slate-600 hover:bg-slate-100"
-            }">Bajo Costo (&lt; $30.000)</button>
-            <button onclick="window.EnvuelveApp.setSolutionTab('subsidios')" class="flex-1 sm:flex-none px-4 py-2.5 rounded-xl text-sm font-semibold transition cursor-pointer ${
-              activeSolutionTab === "subsidios" ? "bg-[#D96B27] text-white" : "text-slate-600 hover:bg-slate-100"
-            }">Subsidios DS 27</button>
-          </div>
-
-          ${
-            activeSolutionTab !== "subsidios"
-              ? `
-            <label class="inline-flex items-center gap-2 text-sm font-medium text-slate-700 bg-white px-4 py-2.5 rounded-xl border border-slate-200 cursor-pointer">
-              <input type="checkbox" ${filterArrendatarioOnly ? "checked" : ""} onchange="window.EnvuelveApp.toggleArrendatarioFilter()" class="w-4 h-4 accent-[#0F3D5E]" />
-              <span>Solo soluciones sin obras (arrendatarios)</span>
-            </label>
-          `
-              : ""
-          }
-        </div>
-
-        ${tabContentHtml}
-
-        <!-- Sección Tips Costo $0 -->
-        <div class="mt-12">
-          <h2 class="font-heading text-2xl font-bold text-[#0F3D5E]">Tips diarios a costo $0</h2>
-          <p class="text-sm text-slate-600 mt-1 mb-4">Hábitos simples que mejoran la temperatura de tu hogar desde hoy sin gastar dinero.</p>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-            ${tipsHtml}
-          </div>
+        <div class="space-y-5">
+          ${cardsHtml}
         </div>
       </section>
     `;
   }
 
   // =========================================================================
-  // VISTA 5: ESTADÍSTICAS (/estadisticas)
+  // VISTA 6: ESTADÍSTICAS (/estadisticas)
   // =========================================================================
   async function renderStats() {
     const main = document.getElementById("app-main");
@@ -871,14 +1228,14 @@
       .sort((a, b) => b[1] - a[1])
       .slice(0, 6);
 
-    const labelsMap = window.SOLUTIONS_CATALOG.weaknessLabels;
+    const tagMap = getTagMap();
 
     main.innerHTML = `
       <section class="max-w-5xl mx-auto px-4 pt-6 pb-16">
         <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
           <div>
             <span class="text-xs font-bold uppercase tracking-wider text-[#D96B27]">Panel de monitoreo · Evidencia agregada</span>
-            <h1 class="font-heading text-2xl sm:text-3xl font-extrabold text-[#0F3D5E]">Estadísticas de Viviendas en Santiago</h1>
+            <h1 class="font-heading text-2xl sm:text-3xl font-extrabold text-[#0F3D5E]">Estadísticas — Iniciativa Envuelve tu Casa</h1>
           </div>
           <button onclick="window.EnvuelveApp.exportStatsCSV()" class="px-4 py-2.5 rounded-xl bg-[#0F3D5E] text-white text-sm font-semibold hover:bg-[#0a2c45] cursor-pointer">
             ⬇ Exportar CSV
@@ -930,7 +1287,7 @@
                         .map(
                           ([tag, count], idx) => `
                         <li class="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-slate-50">
-                          <span class="font-medium text-slate-800">${idx + 1}. ${labelsMap[tag] || tag}</span>
+                          <span class="font-medium text-slate-800">${idx + 1}. ${(tagMap[tag] && tagMap[tag].etiqueta_usuario) || tag}</span>
                           <span class="font-bold text-[#D96B27] shrink-0">${count} (${Math.round((count / total) * 100)}%)</span>
                         </li>
                       `
@@ -1027,7 +1384,7 @@
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "estadisticas_envuelve_tu_casa.csv";
+    a.download = "estadisticas_iniciativa_envuelve_tu_casa.csv";
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -1056,7 +1413,7 @@
           <div class="mb-3 w-[calc(100vw-2rem)] max-w-sm bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">
             <div class="bg-[#0F3D5E] text-white px-4 py-3 flex items-center justify-between">
               <div>
-                <p class="font-heading font-bold text-sm">Asistente Envuelve tu Casa</p>
+                <p class="font-heading font-bold text-sm">Asistente Iniciativa Envuelve tu Casa</p>
                 <p class="text-[11px] text-sky-200">${faqGroup.titulo}</p>
               </div>
               <button onclick="window.EnvuelveApp.toggleAssistant()" class="text-white/80 hover:text-white text-lg font-bold px-2 cursor-pointer">✕</button>
@@ -1124,8 +1481,13 @@
       main.innerHTML = renderSurvey();
     } else if (route === "/resultado") {
       main.innerHTML = renderResult();
+    } else if (route === "/tips-y-subsidios") {
+      main.innerHTML = renderTipsAndSubsidies();
     } else if (route === "/soluciones") {
-      main.innerHTML = renderSolutions();
+      // Compatibilidad con rutas antiguas
+      main.innerHTML = lastDiagnosis ? renderResult() : renderTipsAndSubsidies();
+    } else if (route === "/documentos") {
+      main.innerHTML = renderDocuments();
     } else if (route === "/estadisticas") {
       renderStats();
     } else {
@@ -1140,6 +1502,10 @@
     navigateTo,
     startOrContinue() {
       navigateTo("/encuesta");
+    },
+    openTipsSubTab(tab) {
+      activeTipsSubTab = tab;
+      navigateTo("/tips-y-subsidios");
     },
     setAnswer(field, value) {
       answers[field] = value;
@@ -1174,8 +1540,16 @@
     },
     submitSurvey,
     resetSurvey,
-    setSolutionTab(tab) {
-      activeSolutionTab = tab;
+    setDiagnosisSolTab(tab) {
+      activeDiagnosisSolTab = tab;
+      renderRoute();
+    },
+    setTipsSubTab(tab) {
+      activeTipsSubTab = tab;
+      renderRoute();
+    },
+    setTipSeason(season) {
+      tipSeasonFilter = season;
       renderRoute();
     },
     toggleArrendatarioFilter() {
