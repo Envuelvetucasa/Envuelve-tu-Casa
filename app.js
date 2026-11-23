@@ -63,12 +63,30 @@
     return window.location.protocol === "file:";
   }
 
+  function normalizeRoutePath(raw) {
+    let p = String(raw || "/").trim().toLowerCase();
+    // Quitar tildes comunes (ej. /estadísticas -> /estadisticas)
+    p = p.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    if (!p.startsWith("/")) p = "/" + p;
+    if (p.length > 1) p = p.replace(/\/+$/, "");
+    return p;
+  }
+
   function getCurrentRoute() {
-    if (isFileProtocol()) {
-      const h = (window.location.hash || "#/").replace(/^#/, "");
-      return h || "/";
+    // Soportar ?vista=estadisticas o hash (#estadisticas / #/estadisticas) incluso sin vercel.json
+    const params = new URLSearchParams(window.location.search || "");
+    const vistaParam = params.get("vista");
+    if (vistaParam) {
+      return normalizeRoutePath(vistaParam);
     }
-    return window.location.pathname || "/";
+    const rawHash = (window.location.hash || "").replace(/^#/, "");
+    if (rawHash) {
+      return normalizeRoutePath(rawHash);
+    }
+    if (isFileProtocol()) {
+      return "/";
+    }
+    return normalizeRoutePath(window.location.pathname || "/");
   }
 
   function navigateTo(path) {
@@ -336,18 +354,24 @@
   }
 
   async function fetchAggregatedStats() {
+    let rpcErrorMsg = null;
     if (supabaseClient) {
       // 1. Intentar primero función RPC agregada segura (P0-B: no expone filas individuales)
       try {
         const { data, error } = await supabaseClient.rpc("get_estadisticas_agregadas");
         if (!error && data && typeof data === "object") {
-          return { source: "supabase_rpc", stats: data };
+          return { source: "supabase_rpc", stats: data, rpcErrorMsg: null };
+        }
+        if (error) {
+          rpcErrorMsg = error.message || JSON.stringify(error);
+          console.warn("RPC get_estadisticas_agregadas falló:", rpcErrorMsg);
         }
       } catch (e) {
-        // Continúa al fallback si la RPC aún no ha sido creada en Supabase
+        rpcErrorMsg = e && e.message ? e.message : String(e);
+        console.warn("Excepción en RPC get_estadisticas_agregadas:", rpcErrorMsg);
       }
 
-      // 2. Fallback temporal solo si el equipo todavía no ejecuta el SQL de la RPC
+      // 2. Fallback temporal solo si la política SELECT aún existe
       try {
         const { data, error } = await supabaseClient
           .from("diagnosticos")
@@ -355,7 +379,11 @@
           .order("created_at", { ascending: false })
           .limit(1000);
         if (!error && Array.isArray(data)) {
-          return { source: "supabase_legacy", stats: aggregateRowsLocally(data) };
+          // Si devolvió 0 filas y hubo error RPC, probablemente RLS bloqueó SELECT porque falta crear la RPC
+          if (data.length === 0 && rpcErrorMsg) {
+            return { source: "supabase_rpc_missing", stats: aggregateRowsLocally([]), rpcErrorMsg };
+          }
+          return { source: "supabase_legacy", stats: aggregateRowsLocally(data), rpcErrorMsg };
         }
         console.error("Error consultando Supabase:", error);
       } catch (err) {
@@ -364,7 +392,7 @@
     }
 
     const localRows = JSON.parse(localStorage.getItem(STORAGE_LOCAL_DB_KEY) || "[]");
-    return { source: "local", stats: aggregateRowsLocally(localRows) };
+    return { source: "local", stats: aggregateRowsLocally(localRows), rpcErrorMsg };
   }
 
   // --- Helpers Visuales ---
@@ -1654,7 +1682,7 @@
     const main = document.getElementById("app-main");
     main.innerHTML = `<div class="max-w-5xl mx-auto px-4 py-16 text-center text-slate-500">Cargando estadísticas agregadas...</div>`;
 
-    const { source, stats } = await fetchAggregatedStats();
+    const { source, stats, rpcErrorMsg } = await fetchAggregatedStats();
     const total = Number(stats.total || 0);
     const avgInv = Number(stats.avg_invierno || 0);
     const avgVer = Number(stats.avg_verano || 0);
@@ -1676,10 +1704,19 @@
           ✓ <strong>Datos globales en Supabase (últimos 1.000 registros):</strong> Recuerda ejecutar el SQL de la función <code>get_estadisticas_agregadas()</code> para restringir la lectura directa de filas por RLS.
         </div>
       `;
+    } else if (source === "supabase_rpc_missing") {
+      sourceBanner = `
+        <div class="mb-6 p-4 rounded-xl bg-red-50 border-2 border-red-200 text-red-900 text-sm space-y-1">
+          <p><strong>Falta activar la función agregada en Supabase:</strong> La lectura pública de filas está protegida por RLS, pero la función <code>get_estadisticas_agregadas()</code> devolvió un error.</p>
+          <p class="text-xs font-mono bg-white/80 p-2 rounded border border-red-200">Detalle: ${rpcErrorMsg || "Función no encontrada"}</p>
+          <p class="text-xs">Ejecuta el SQL corregido (con <code>CROSS JOIN LATERAL unnest</code>) en Supabase → SQL Editor y recarga esta página.</p>
+        </div>
+      `;
     } else {
       sourceBanner = `
         <div class="mb-6 p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-sm">
           <strong>Modo local activo (solo este navegador, máx. 200 registros):</strong> No hay conexión remota activa con Supabase. Verifica que <code>supabaseConfig.js</code> tenga la URL raíz <code>https://tu-proyecto.supabase.co</code> (sin <code>/rest/v1/</code>) y tu clave pública.
+          ${rpcErrorMsg ? `<p class="text-xs mt-1 font-mono">Detalle técnico: ${rpcErrorMsg}</p>` : ""}
         </div>
       `;
     }
@@ -2021,9 +2058,22 @@
 
   window.addEventListener("popstate", renderRoute);
   window.addEventListener("hashchange", renderRoute);
+  function injectFooterStatsLink() {
+    const footerBox = document.querySelector("footer > div");
+    if (!footerBox || document.getElementById("footer-stats-btn")) return;
+    const btn = document.createElement("button");
+    btn.id = "footer-stats-btn";
+    btn.type = "button";
+    btn.textContent = "Estadísticas";
+    btn.className = "text-xs text-slate-400 hover:text-[#0F3D5E] underline cursor-pointer";
+    btn.onclick = () => navigateTo("/estadisticas");
+    footerBox.appendChild(btn);
+  }
+
   document.addEventListener("DOMContentLoaded", () => {
     initSupabase();
     loadState();
+    injectFooterStatsLink();
     renderRoute();
   });
 })();
