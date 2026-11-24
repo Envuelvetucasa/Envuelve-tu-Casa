@@ -79,7 +79,7 @@ window.QUESTIONS_DATA = {
           "options": [
             {
               "value": "casa_aislada",
-              "label": "Casa aislada (no toca vecinos)"
+              "label": "Casa aislada (No comparte muros con vecinos)"
             },
             {
               "value": "casa_pareada",
@@ -87,7 +87,7 @@ window.QUESTIONS_DATA = {
             },
             {
               "value": "casa_continua",
-              "label": "Casa continua / en hilera (pegada por ambos lados)"
+              "label": "Casa continua / en hilera (Comparte muros por ambos lados)"
             },
             {
               "value": "depto_ultimo_piso",
@@ -144,7 +144,7 @@ window.QUESTIONS_DATA = {
         {
           "id": "materialMuro",
           "number": 4,
-          "label": "¿De qué material son los muros que dan hacia afuera?",
+          "label": "¿De qué material son los muros que dan hacia el exterior de la vivienda?",
           "type": "radio",
           "options": [
             {
@@ -181,7 +181,7 @@ window.QUESTIONS_DATA = {
         {
           "id": "techo",
           "number": 5,
-          "label": "¿Tu techo tiene material aislante?",
+          "label": "¿Tu techo tiene material aislante (lana o poliestireno)?",
           "type": "radio",
           "hideWhenTechoAdiabatic": true,
           "options": [
@@ -191,11 +191,11 @@ window.QUESTIONS_DATA = {
             },
             {
               "value": "aislacion_basica",
-              "label": "Aislación básica (< 5 cm) o no sé"
+              "label": "Aislación básica (menos de 5 cm de grosor) o no sé"
             },
             {
               "value": "aislacion_estandar",
-              "label": "Aislación estándar (8–10 cm lana o poliestireno)"
+              "label": "Aislación estándar (8-10 cm de grosor)"
             },
             {
               "value": "aislacion_alta",
@@ -594,7 +594,7 @@ window.QUESTIONS_DATA = {
         },
         {
           "q": "No puedo subir al entretecho, ¿qué marco?",
-          "a": "No te arriesgues a subir. Elige 'Aislación básica (< 5 cm) o no sé'. Después el diagnóstico te indicará cómo confirmarlo de forma segura."
+          "a": "No te arriesgues a subir. Elige 'Aislación básica (menos de 5 cm de grosor) o no sé'. Después el diagnóstico te indicará cómo confirmarlo de forma segura."
         },
         {
           "q": "¿Qué es un piso ventilado?",
