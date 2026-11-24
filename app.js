@@ -472,11 +472,11 @@
           </div>
 
           <h1 class="font-heading text-3xl sm:text-5xl font-extrabold text-[#0F3D5E] leading-tight tracking-tight max-w-3xl">
-            Descubre qué tan aislado térmicamente está tu hogar en menos de 5 minutos
+            Revisa en minutos si tu casa está bien protegida del frío y del calor
           </h1>
 
           <p class="mt-4 text-base sm:text-lg text-slate-600 max-w-2xl leading-relaxed">
-            Pre-diagnóstico térmico gratuito para <strong>casas y departamentos de Santiago</strong>. Recibe un reporte orientativo con soluciones priorizadas según la gravedad de tus puntos críticos, paquete inicial ajustado a tu presupuesto, tips a costo $0 y subsidios estatales 2026.
+            Evaluación gratuita para <strong>casas y departamentos de Santiago</strong>. Descubre por dónde entra el frío o el calor, recibe soluciones claras según tu presupuesto, tips sin costo y los subsidios estatales vigentes en 2026.
           </p>
 
           <div class="mt-7 flex flex-col sm:flex-row gap-3">
@@ -505,7 +505,7 @@
             <div class="bg-white p-6 rounded-2xl border border-slate-200">
               <div class="w-10 h-10 rounded-xl bg-[#0F3D5E]/10 text-[#0F3D5E] font-heading font-bold flex items-center justify-center text-lg mb-4">1</div>
               <h3 class="font-heading font-bold text-lg text-[#0F3D5E]">Responde preguntas simples</h3>
-              <p class="mt-2 text-slate-600 text-sm leading-relaxed">Sobre tus muros, techo, piso, ventanas, humedad y sol en menos de 5 minutos, con ayudas caseras y asistente guiado.</p>
+              <p class="mt-2 text-slate-600 text-sm leading-relaxed">Sobre tus muros, techo, piso, ventanas, humedad y sol en menos de 5 minutos, con métodos simples para responderlas y un asistente guiado.</p>
             </div>
             <div class="bg-white p-6 rounded-2xl border border-slate-200">
               <div class="w-10 h-10 rounded-xl bg-[#D96B27]/15 text-[#D96B27] font-heading font-bold flex items-center justify-center text-lg mb-4">2</div>
