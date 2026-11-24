@@ -125,6 +125,40 @@
     return map;
   }
 
+  function formatOrientacionesLabel(orientaciones) {
+    const names = { norte: "Norte", oriente: "Oriente", poniente: "Poniente", sur: "Sur" };
+    return (orientaciones || []).map((o) => names[o] || o).join(" + ");
+  }
+
+  function getFacadePlacementNote(sol, input) {
+    const oris = Array.isArray(input.orientaciones) ? input.orientaciones : [];
+    if (oris.length <= 1) return "";
+    const hasNorte = oris.includes("norte");
+    const hasPoniente = oris.includes("poniente");
+    const hasSur = oris.includes("sur");
+
+    if (sol.fachada_objetivo === "poniente" && hasPoniente) {
+      return hasNorte
+        ? "Instalar solo en ventanas al Poniente (evitar en fachada Norte para no bloquear el sol de invierno)."
+        : "Instalar específicamente en tus ventanas orientadas al Poniente (sol de tarde).";
+    }
+    if (sol.fachada_objetivo === "norte_o_poniente") {
+      if (hasNorte && hasPoniente) {
+        return "En fachada Norte usa alero horizontal o toldo retráctil; en Poniente prioriza persiana exterior o toldo vertical para el sol bajo de tarde.";
+      }
+      if (hasNorte) {
+        return "Instalar en fachada Norte (bloquea el sol alto en verano y deja pasar el sol bajo en invierno).";
+      }
+      if (hasPoniente) {
+        return "Priorizar en fachada Poniente para frenar el sol directo de tarde.";
+      }
+    }
+    if (sol.fachada_objetivo === "sur_o_fria" && hasSur) {
+      return "Priorizar en las piezas orientadas al Sur (las más frías de tu vivienda).";
+    }
+    return "";
+  }
+
   // --- Motor estricto de elegibilidad (evita contradicciones y redundancias) ---
   function isSolutionEligible(sol, input, result) {
     const debilidades = result.debilidades || [];
@@ -143,6 +177,17 @@
         if (Array.isArray(forbidden) && forbidden.includes(input[f])) {
           return false;
         }
+      }
+    }
+
+    // 2b. Reglas de orientación múltiple (exige tener al menos una fachada compatible)
+    if (sol.requiere_orientacion_alguna && Array.isArray(sol.requiere_orientacion_alguna)) {
+      const userOris = Array.isArray(input.orientaciones)
+        ? input.orientaciones
+        : (typeof input.orientacionPrincipal === "string" ? input.orientacionPrincipal.split(",") : []);
+      const hasMatchingOri = sol.requiere_orientacion_alguna.some((o) => userOris.includes(o));
+      if (!hasMatchingOri) {
+        return false;
       }
     }
 
@@ -572,6 +617,38 @@
               ${opts}
             </select>
           `;
+        } else if (q.type === "checkbox") {
+          const selectedArr = Array.isArray(currentVal)
+            ? currentVal
+            : (currentVal ? [String(currentVal)] : []);
+          inputHtml = `
+            ${q.multiHint ? `<p class="mt-1.5 text-xs text-slate-500">${q.multiHint}</p>` : ""}
+            <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              ${q.options
+                .map((opt) => {
+                  const selected = selectedArr.includes(String(opt.value));
+                  return `
+                    <button
+                      type="button"
+                      onclick="window.EnvuelveApp.toggleMultiAnswer('${q.id}', '${opt.value}', ${opt.exclusive ? "true" : "false"})"
+                      class="text-left px-4 py-3.5 rounded-xl border-2 transition text-base font-medium flex items-center justify-between gap-3 cursor-pointer ${
+                        selected
+                          ? "border-[#0F3D5E] bg-[#0F3D5E]/5 text-[#0F3D5E] shadow-sm"
+                          : "border-slate-200 bg-white text-slate-700 hover:border-slate-300"
+                      }"
+                    >
+                      <span>${opt.label}</span>
+                      <span class="w-5 h-5 shrink-0 rounded-md border-2 flex items-center justify-center text-xs font-bold ${
+                        selected ? "border-[#0F3D5E] bg-[#0F3D5E] text-white" : "border-slate-300 bg-white"
+                      }">
+                        ${selected ? "✓" : ""}
+                      </span>
+                    </button>
+                  `;
+                })
+                .join("")}
+            </div>
+          `;
         } else {
           inputHtml = `
             <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -707,7 +784,12 @@
     block.questions.forEach((q) => {
       if (q.hideWhenTechoAdiabatic && esTechoAdiab) return;
       if (q.hideWhenPisoAdiabatic && esPisoAdiab) return;
-      if (answers[q.id] === undefined || answers[q.id] === "") {
+      const val = answers[q.id];
+      if (
+        val === undefined ||
+        val === "" ||
+        (Array.isArray(val) && val.length === 0)
+      ) {
         missing.push(q.number);
       }
     });
@@ -836,6 +918,11 @@
           ${
             sol.etiqueta_alternativa
               ? `<p class="mt-1.5 text-xs font-semibold text-indigo-800 bg-indigo-50 border border-indigo-200 rounded-lg px-2.5 py-1 inline-block">🔀 ${sol.etiqueta_alternativa}</p>`
+              : ""
+          }
+          ${
+            opts.facadeNote
+              ? `<p class="mt-1.5 text-xs font-semibold text-emerald-900 bg-emerald-50 border border-emerald-200 rounded-lg px-2.5 py-1.5">📍 ${opts.facadeNote}</p>`
               : ""
           }
 
@@ -1001,7 +1088,7 @@
                   Seleccionamos las medidas de mayor urgencia sin duplicar alternativas que cumplen la misma función, para que partas atacando tu habitación o entrada más crítica dentro de tu tope de $30.000.
                 </p>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  ${chosen.map((item, idx) => renderSolutionCard(item, idx)).join("")}
+                  ${chosen.map((item, idx) => renderSolutionCard(item, idx, { facadeNote: getFacadePlacementNote(item.sol, input) })).join("")}
                 </div>
               </div>
             `;
@@ -1021,7 +1108,7 @@
               ? `<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                   ${remaining
                     .map((item, idx) =>
-                      renderSolutionCard(item, idx, { hideRank: Boolean(bundleHtml) })
+                      renderSolutionCard(item, idx, { hideRank: Boolean(bundleHtml), facadeNote: getFacadePlacementNote(item.sol, input) })
                     )
                     .join("")}
                 </div>`
@@ -1052,7 +1139,7 @@
               <div class="mb-6">
                 <h3 class="font-heading text-lg font-bold text-[#0F3D5E] mb-3">Dentro de tu presupuesto ($30.000 – $300.000)</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  ${inRange.map((item, idx) => renderSolutionCard(item, idx)).join("")}
+                  ${inRange.map((item, idx) => renderSolutionCard(item, idx, { facadeNote: getFacadePlacementNote(item.sol, input) })).join("")}
                 </div>
               </div>
             `;
@@ -1063,7 +1150,7 @@
                 <h3 class="font-heading text-lg font-bold text-[#0F3D5E] mb-1">Proyectos mayores (> $300.000 — evaluables por etapas o Subsidio DS 27)</h3>
                 <p class="text-xs text-slate-600 mb-3">Superan tu presupuesto actual, pero son las obras estructurales más efectivas si postulas a financiamiento estatal.</p>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  ${aboveRange.map((item, idx) => renderSolutionCard(item, idx, { hideRank: inRange.length > 0 })).join("")}
+                  ${aboveRange.map((item, idx) => renderSolutionCard(item, idx, { hideRank: inRange.length > 0, facadeNote: getFacadePlacementNote(item.sol, input) })).join("")}
                 </div>
               </div>
             `;
@@ -1071,7 +1158,7 @@
         } else if (eligibleAltoEnvolvente.length > 0) {
           structuralHtml = `
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-              ${eligibleAltoEnvolvente.map((item, idx) => renderSolutionCard(item, idx)).join("")}
+              ${eligibleAltoEnvolvente.map((item, idx) => renderSolutionCard(item, idx, { facadeNote: getFacadePlacementNote(item.sol, input) })).join("")}
             </div>
           `;
         }
@@ -1083,7 +1170,7 @@
             <span class="text-xs font-bold uppercase tracking-wider text-indigo-700">Complemento opcional (no reemplaza aislar la envolvente)</span>
             <h3 class="font-heading text-lg font-bold text-[#0F3D5E] mt-0.5 mb-3">Climatización activa de bajo consumo mensual</h3>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              ${eligibleClimaActiva.map((item, idx) => renderSolutionCard(item, idx, { hideRank: true })).join("")}
+              ${eligibleClimaActiva.map((item, idx) => renderSolutionCard(item, idx, { hideRank: true, facadeNote: getFacadePlacementNote(item.sol, input) })).join("")}
             </div>
           </div>
         `
@@ -1252,7 +1339,11 @@
       <section class="max-w-5xl mx-auto px-4 pt-6 pb-16">
         <div class="flex flex-wrap items-center justify-between gap-3 mb-5 no-print">
           <div>
-            <span class="text-xs font-bold uppercase tracking-wider text-[#1E7E5A]">Zona Térmica D · ${normalizedInput.comuna}</span>
+            <span class="text-xs font-bold uppercase tracking-wider text-[#1E7E5A]">Zona Térmica D · ${normalizedInput.comuna}${
+              result.orientacionesEvaluadas && result.orientacionesEvaluadas.length
+                ? ` · Fachadas: ${formatOrientacionesLabel(result.orientacionesEvaluadas)}`
+                : ""
+            }</span>
             <h1 class="font-heading text-2xl sm:text-3xl font-extrabold text-[#0F3D5E]">Tu Índice Orientativo de Desempeño Térmico</h1>
           </div>
           <button onclick="window.EnvuelveApp.resetSurvey()" class="text-sm text-slate-500 hover:text-[#0F3D5E] underline cursor-pointer">
@@ -1347,6 +1438,11 @@
                 <div class="h-full rounded-full" style="width: ${result.puntajeVerano}%; background-color: ${verStyle.bar};"></div>
               </div>
               <p class="text-xs text-slate-500 mt-2">Resistencia estimada frente al calor y radiación solar (pondera 35% del índice).</p>
+              ${
+                result.tieneVentilacionCruzada
+                  ? `<p class="text-xs font-semibold text-[#1E7E5A] mt-2">🌬️ Ventaja detectada: tienes fachadas opuestas, lo que permite refrescar rápido por ventilación cruzada nocturna en verano.</p>`
+                  : ""
+              }
             </div>
           </div>
         </div>
@@ -1985,6 +2081,30 @@
     openTipsSubTab(tab) {
       activeTipsSubTab = tab;
       navigateTo("/tips-y-subsidios");
+    },
+    toggleMultiAnswer(field, value, isExclusive) {
+      let current = answers[field];
+      if (!Array.isArray(current)) {
+        current = current ? [String(current)] : [];
+      } else {
+        current = [...current];
+      }
+
+      if (isExclusive) {
+        answers[field] = current.includes(value) ? [] : [value];
+      } else {
+        // Quitar cualquier opción exclusiva ("no_se") al elegir una orientación real
+        current = current.filter((v) => v !== "no_se");
+        if (current.includes(value)) {
+          current = current.filter((v) => v !== value);
+        } else {
+          current.push(value);
+        }
+        answers[field] = current;
+      }
+
+      saveState();
+      renderRoute();
     },
     setAnswer(field, value) {
       answers[field] = value;

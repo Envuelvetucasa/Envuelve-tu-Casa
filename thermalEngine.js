@@ -1,5 +1,6 @@
-// Motor de Pre-Diagnóstico Térmico "Iniciativa Envuelve tu Casa" v2.0
+// Motor de Pre-Diagnóstico Térmico "Iniciativa Envuelve tu Casa" v2.1
 // Basado referencialmente en parámetros del Manual Técnico CEV (MINVU) - Zona Térmica D (Santiago)
+// Soporta múltiples orientaciones de fachada y detección de ventilación cruzada
 
 (function (global) {
   const U_VIDRIO = {
@@ -36,6 +37,7 @@
 
   // Comunas RM con sectores sobre 2.000 MSNM (Zona Térmica H según Anexo F Manual CEV)
   const COMUNAS_PRECORDILLERA_ZONA_H = ["Lo Barnechea", "Colina", "San José de Maipo"];
+  const VALID_ORIENTATIONS = ["norte", "oriente", "poniente", "sur"];
 
   // Supuestos conservadores de referencia cuando el usuario marca "No sé"
   const DEFAULTS_NO_SE = {
@@ -48,7 +50,7 @@
     puerta: "madera_entablerada",
     sienteChiflon: false,
     humedadCondensacion: false,
-    orientacionPrincipal: "oriente",
+    orientacionPrincipal: ["oriente"],
     tieneAleroOToldo: "ninguno",
     nivelSombraEntorno: "parcial"
   };
@@ -68,10 +70,38 @@
 
   function normalizeAleroValue(rawVal) {
     if (rawVal === "completo" || rawVal === "parcial" || rawVal === "ninguno") return rawVal;
-    // Compatibilidad con respuestas antiguas guardadas en localStorage (true/false)
     if (rawVal === true || rawVal === "true") return "completo";
     if (rawVal === false || rawVal === "false") return "ninguno";
     return "ninguno";
+  }
+
+  // Normaliza orientaciones tanto desde array (multiselección) como desde string antiguo (compatibilidad)
+  function normalizeOrientaciones(rawVal) {
+    let arr = [];
+    if (Array.isArray(rawVal)) {
+      arr = rawVal;
+    } else if (typeof rawVal === "string" && rawVal.trim() !== "") {
+      arr = rawVal.split(",").map((s) => s.trim());
+    }
+
+    const explicitlyUnknown = arr.includes("no_se");
+    const valid = [];
+    arr.forEach((v) => {
+      if (VALID_ORIENTATIONS.includes(v) && !valid.includes(v)) {
+        valid.push(v);
+      }
+    });
+
+    if (valid.length === 0) {
+      return { orientaciones: ["oriente"], wasEstimated: explicitlyUnknown };
+    }
+    return { orientaciones: valid, wasEstimated: false };
+  }
+
+  function hasCrossVentilation(orientaciones) {
+    const hasNS = orientaciones.includes("norte") && orientaciones.includes("sur");
+    const hasEO = orientaciones.includes("oriente") && orientaciones.includes("poniente");
+    return hasNS || hasEO;
   }
 
   function normalizeSurveyAnswers(rawAnswers) {
@@ -93,9 +123,6 @@
       normalized.techo = "adiabatico";
     } else {
       normalized.techo = rawAnswers.techo || "aislacion_basica";
-      if (rawAnswers.techo === "aislacion_basica") {
-        // Opcionalmente no suma a no_se estricto porque puede ser básica conocida, pero si no respondió se estima
-      }
     }
 
     if (esPisoAdiabatico) {
@@ -107,8 +134,19 @@
       normalized.piso = rawAnswers.piso;
     }
 
+    // Orientaciones múltiples (Pregunta 13)
+    const oriNorm = normalizeOrientaciones(rawAnswers.orientacionPrincipal);
+    normalized.orientaciones = oriNorm.orientaciones;
+    normalized.orientacionPrincipal =
+      oriNorm.orientaciones.length === 1
+        ? oriNorm.orientaciones[0]
+        : oriNorm.orientaciones.join(",");
+    if (oriNorm.wasEstimated) {
+      estimatedFields.push("orientacionPrincipal");
+    }
+
     Object.keys(DEFAULTS_NO_SE).forEach((field) => {
-      if (field === "piso") return; // ya procesado arriba
+      if (field === "piso" || field === "orientacionPrincipal") return;
       const val = rawAnswers[field];
       if (val === "no_se" || val === undefined || val === null || val === "") {
         normalized[field] = DEFAULTS_NO_SE[field];
@@ -248,14 +286,13 @@
       debilidades.add("marco_metalico_frio");
     }
 
-    // P1-2: Separar infiltración confirmada (sienteChiflon) vs riesgo por tipo de cierre
     if (input.sienteChiflon) {
       debilidades.add("infiltracion_ventanas");
     } else if (input.cierreVentana === "corredera" || input.cierreVentana === "guillotina_antigua") {
       debilidades.add("riesgo_infiltracion_ventanas");
     }
 
-    // 5. Puertas (P1-1: separar infiltración real por chiflón vs puerta de baja aislación)
+    // 5. Puertas
     const uPuertaMap = {
       madera_solida: 1.7,
       madera_entablerada: 2.63,
@@ -272,69 +309,86 @@
       debilidades.add("puerta_poco_aislada");
     }
 
-    // 6. Humedad / condensación confirmada (P1-12)
+    // 6. Humedad / condensación confirmada
     if (input.humedadCondensacion === true) {
       debilidades.add("humedad_condensacion");
     }
 
-    // 7. Modulador Bioclimático Santiago (Alero 3 niveles: completo / parcial / ninguno)
+    // 7. Modulador Bioclimático Santiago (promedia todas las orientaciones marcadas + ventilación cruzada)
     const alero = normalizeAleroValue(input.tieneAleroOToldo);
-    let fInvierno = 1.0;
-    let fVerano = 1.0;
+    const orientaciones = Array.isArray(input.orientaciones) && input.orientaciones.length > 0
+      ? input.orientaciones
+      : normalizeOrientaciones(input.orientacionPrincipal).orientaciones;
 
-    if (input.orientacionPrincipal === "norte") {
-      fInvierno = input.nivelSombraEntorno === "muy_sombreado" ? 1.02 : 0.86;
-      if (alero === "completo") {
-        fVerano = 0.88;
-      } else if (alero === "parcial") {
-        fVerano = 0.97;
+    let sumFInv = 0;
+    let sumFVer = 0;
+
+    orientaciones.forEach((ori) => {
+      let fI = 1.0;
+      let fV = 1.0;
+
+      if (ori === "norte") {
+        fI = input.nivelSombraEntorno === "muy_sombreado" ? 1.02 : 0.86;
+        if (alero === "completo") {
+          fV = 0.88;
+        } else if (alero === "parcial") {
+          fV = 0.97;
+        } else {
+          fV = 1.05;
+          if (input.nivelSombraEntorno === "despejado") {
+            debilidades.add("falta_sombra_solar");
+          }
+        }
+      } else if (ori === "poniente") {
+        fI = 1.0;
+        if (alero === "completo") {
+          fV = input.nivelSombraEntorno === "despejado" ? 1.02 : 0.95;
+          if (input.nivelSombraEntorno === "despejado") {
+            debilidades.add("sobrecalentamiento_poniente");
+          }
+        } else if (alero === "parcial") {
+          const sobrecargaParcial = vidrioInfo.fs > 0.8 ? 1.26 : 1.15;
+          fV =
+            input.nivelSombraEntorno === "despejado"
+              ? sobrecargaParcial
+              : input.nivelSombraEntorno === "parcial"
+              ? sobrecargaParcial - 0.08
+              : 0.98;
+          if (input.nivelSombraEntorno !== "muy_sombreado") {
+            debilidades.add("sobrecalentamiento_poniente");
+            debilidades.add("falta_sombra_solar");
+          }
+        } else {
+          const sobrecargaBase = vidrioInfo.fs > 0.8 ? 1.38 : 1.22;
+          fV =
+            input.nivelSombraEntorno === "despejado"
+              ? sobrecargaBase
+              : input.nivelSombraEntorno === "parcial"
+              ? sobrecargaBase - 0.1
+              : 1.02;
+          if (input.nivelSombraEntorno !== "muy_sombreado") {
+            debilidades.add("sobrecalentamiento_poniente");
+            debilidades.add("falta_sombra_solar");
+          }
+        }
+      } else if (ori === "sur") {
+        fI = input.nivelSombraEntorno === "muy_sombreado" ? 1.24 : 1.14;
+        fV = 0.82;
+        debilidades.add("frio_orientacion_sur");
       } else {
-        fVerano = 1.05;
-        if (input.nivelSombraEntorno === "despejado") {
-          debilidades.add("falta_sombra_solar");
-        }
+        // Oriente
+        fI = 0.96;
+        fV = input.nivelSombraEntorno === "despejado" && alero === "ninguno" ? 1.06 : 0.95;
       }
-    } else if (input.orientacionPrincipal === "poniente") {
-      fInvierno = 1.0;
-      if (alero === "completo") {
-        fVerano = input.nivelSombraEntorno === "despejado" ? 1.02 : 0.95;
-        if (input.nivelSombraEntorno === "despejado") {
-          debilidades.add("sobrecalentamiento_poniente");
-        }
-      } else if (alero === "parcial") {
-        const sobrecargaParcial = vidrioInfo.fs > 0.8 ? 1.26 : 1.15;
-        fVerano =
-          input.nivelSombraEntorno === "despejado"
-            ? sobrecargaParcial
-            : input.nivelSombraEntorno === "parcial"
-            ? sobrecargaParcial - 0.08
-            : 0.98;
-        if (input.nivelSombraEntorno !== "muy_sombreado") {
-          debilidades.add("sobrecalentamiento_poniente");
-          debilidades.add("falta_sombra_solar");
-        }
-      } else {
-        const sobrecargaBase = vidrioInfo.fs > 0.8 ? 1.38 : 1.22;
-        fVerano =
-          input.nivelSombraEntorno === "despejado"
-            ? sobrecargaBase
-            : input.nivelSombraEntorno === "parcial"
-            ? sobrecargaBase - 0.1
-            : 1.02;
-        if (input.nivelSombraEntorno !== "muy_sombreado") {
-          debilidades.add("sobrecalentamiento_poniente");
-          debilidades.add("falta_sombra_solar");
-        }
-      }
-    } else if (input.orientacionPrincipal === "sur") {
-      fInvierno = input.nivelSombraEntorno === "muy_sombreado" ? 1.24 : 1.14;
-      fVerano = 0.82;
-      debilidades.add("frio_orientacion_sur");
-    } else {
-      // Oriente
-      fInvierno = 0.96;
-      fVerano = input.nivelSombraEntorno === "despejado" && alero === "ninguno" ? 1.06 : 0.95;
-    }
+
+      sumFInv += fI;
+      sumFVer += fV;
+    });
+
+    const fInvierno = sumFInv / orientaciones.length;
+    const tieneVentilacionCruzada = hasCrossVentilation(orientaciones);
+    // En Santiago (noches frescas de verano), tener fachadas opuestas facilita refrescar por ventilación cruzada (-6% demanda estival)
+    const fVerano = (sumFVer / orientaciones.length) * (tieneVentilacionCruzada ? 0.94 : 1.0);
 
     // 8. Índice orientativo de desempeño (modelo simplificado 65% invierno / 35% verano)
     const compacidad = FACTOR_COMPACIDAD[tv] || 1.0;
@@ -355,7 +409,6 @@
     const puntajeInvierno = toScore100(demandaInvierno);
     const puntajeVerano = toScore100(demandaVerano);
 
-    // P1-7: Nivel de certeza y rango de incertidumbre según cantidad de "No sé"
     let nivelCerteza = "alta";
     let rangoLetras = null;
     if (estCount >= 4) {
@@ -384,7 +437,9 @@
       rangoLetras,
       nivelCerteza,
       esComunaPrecordillera,
-      ahorroEstimadoPct, // Se mantiene el nombre de propiedad por compatibilidad BD; en UI se muestra como "Índice orientativo"
+      tieneVentilacionCruzada,
+      orientacionesEvaluadas: orientaciones,
+      ahorroEstimadoPct,
       puntajeInvierno,
       puntajeVerano,
       uVentanaEstimado: uVentana,
@@ -410,6 +465,7 @@
   global.ThermalEngine = {
     normalizeSurveyAnswers,
     calculateThermalDiagnosis,
-    mapAhorroToCEVLetter
+    mapAhorroToCEVLetter,
+    normalizeOrientaciones
   };
 })(window);

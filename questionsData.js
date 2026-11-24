@@ -1,5 +1,5 @@
 // Contenido completo de la Encuesta (18 preguntas), Ayudas (?) y Asistente Guiado
-// Iniciativa Envuelve tu Casa v2.0 (Auditoría completa integrada)
+// Iniciativa Envuelve tu Casa v2.1 (Orientación múltiple + Protección solar casas/deptos)
 
 window.QUESTIONS_DATA = {
   "comunasRM": [
@@ -411,8 +411,8 @@ window.QUESTIONS_DATA = {
         {
           "id": "orientacionPrincipal",
           "number": 13,
-          "label": "¿Hacia dónde miran las ventanas del living o de los dormitorios?",
-          "type": "radio",
+          "label": "¿Hacia dónde miran las ventanas del living y de los dormitorios?",
+          "type": "checkbox",
           "options": [
             {
               "value": "norte",
@@ -432,35 +432,37 @@ window.QUESTIONS_DATA = {
             },
             {
               "value": "no_se",
-              "label": "No sé"
+              "label": "No sé",
+              "exclusive": true
             }
           ],
-          "help": "En Santiago, la cordillera siempre está al oriente. Párate mirando la cordillera: a tu izquierda está el norte, a tu derecha el sur y a tu espalda el poniente. Otra pista: sol de mañana = oriente; sol fuerte de tarde = poniente; casi nunca entra sol = sur."
+          "help": "Si tu living y tus dormitorios miran hacia lados distintos (por ejemplo, living al norte y dormitorios al sur o poniente), marca todas las orientaciones que correspondan. En Santiago, la cordillera siempre está al oriente: párate mirando la cordillera y a tu izquierda queda el norte, a tu derecha el sur y a tu espalda el poniente. Otra pista: sol de mañana = oriente; sol fuerte de tarde = poniente; casi nunca entra sol = sur.",
+          "multiHint": "Puedes marcar 1 o más orientaciones si tienes ventanas principales en distintas fachadas."
         },
         {
           "id": "tieneAleroOToldo",
           "number": 14,
-          "label": "¿Tienes alero, balcón arriba o toldo? ¿Logra tapar el sol en verano?",
+          "label": "¿Tus ventanas tienen alguna protección exterior contra el sol (alero, cobertizo, pérgola, balcón arriba, toldo o persiana exterior)?",
           "type": "radio",
           "options": [
             {
               "value": "completo",
-              "label": "Sí, da sombra completa al vidrio en verano"
+              "label": "Sí, dan sombra completa al vidrio en verano (cobertizo opaco, toldo, alero amplio, persiana exterior)"
             },
             {
               "value": "parcial",
-              "label": "Sí, pero es corto y entra sol igual en las tardes"
+              "label": "Sí, pero entra sol igual (alero corto, cobertizo de policarbonato transparente, pérgola abierta o balcón angosto)"
             },
             {
               "value": "ninguno",
-              "label": "No tengo alero, balcón arriba ni toldo"
+              "label": "No, el vidrio queda expuesto directo al sol"
             },
             {
               "value": "no_se",
               "label": "No sé"
             }
           ],
-          "help": "En ventanas al poniente un alero corto o un balcón angosto muchas veces no frena el sol bajo de las 16:00 a 19:00 hrs. Marca 'sombra completa' solo si realmente impide que el sol pegue directo al vidrio en verano."
+          "help": "Considera cualquier techo o barrera exterior propia de tu vivienda: cobertizo, terraza techada, alero del techo, pérgola, parrón, toldo, persiana exterior o el balcón del piso superior. Ojo: los cobertizos de policarbonato transparente y los aleros cortos dejan pasar bastante calor en las tardes de verano (marca 'Sí, pero entra sol igual'). Marca 'sombra completa' solo si el vidrio queda realmente a la sombra en las horas de mayor calor."
         },
         {
           "id": "nivelSombraEntorno",
@@ -621,16 +623,16 @@ window.QUESTIONS_DATA = {
       "titulo": "Ayuda: Sol y orientación",
       "items": [
         {
-          "q": "No sé hacia dónde mira mi living",
+          "q": "¿Puedo marcar más de una orientación?",
+          "a": "Sí. Marca todas las orientaciones donde tengas ventanas del living o dormitorios. El diagnóstico combinará tus fachadas y te indicará en qué lado conviene cada solución (además de detectar si tienes ventilación cruzada en verano)."
+        },
+        {
+          "q": "No sé hacia dónde miran mis ventanas",
           "a": "En Santiago, la cordillera siempre está al oriente. Párate mirando la cordillera: a tu izquierda es norte, a tu derecha es sur y a tu espalda es poniente."
         },
         {
-          "q": "¿Cuándo marco alero 'parcial' vs 'completo'?",
-          "a": "Si tienes balcón arriba o un alero, pero en verano igual ves entrar sol directo por el vidrio durante la tarde (muy común al poniente), marca 'parcial'."
-        },
-        {
-          "q": "¿Por qué importa tanto el norte vs el poniente?",
-          "a": "En Santiago, el sol del norte entra bajo en invierno (calienta gratis) y alto en verano (un alero lo frena). En cambio, el sol del poniente entra casi horizontal en las tardes de verano y recalienta mucho."
+          "q": "¿Qué marco si tengo cobertizo de policarbonato o alero corto?",
+          "a": "Marca 'Sí, pero entra sol igual' (parcial). El policarbonato transparente y los aleros angostos dejan pasar buena parte del calor en las tardes de verano."
         }
       ]
     },

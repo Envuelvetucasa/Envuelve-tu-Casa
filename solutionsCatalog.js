@@ -1,16 +1,16 @@
 // =========================================================================
-// BANCO DE SOLUCIONES v2.0 (ANTI-REDUNDANCIA, SIN EPS EXPUESTO, PISO, AC INVERTER)
+// BANCO DE SOLUCIONES v2.1 (ORIENTACIONES MÚLTIPLES, ANTI-REDUNDANCIA, AC INVERTER)
 // Iniciativa Envuelve tu Casa
 // =========================================================================
 
 window.SOLUTIONS_CATALOG = {
   "meta": {
     "proyecto": "Iniciativa Envuelve tu Casa",
-    "version": "2.0.0",
+    "version": "2.1.0",
     "fecha_actualizacion": "2026-11-23",
     "moneda": "CLP",
     "zona_termica": "D (Santiago urbano)",
-    "motor_compatible": "thermalEngine.js v2.0",
+    "motor_compatible": "thermalEngine.js v2.1 (orientación múltiple)",
     "fuente_precios": "Burletes, guardapolvos y selladores: verificados en Sodimac.cl (nov 2026). Obras mayores y equipos: rangos referenciales en Santiago.",
     "advertencia_precios": "Precios referenciales en CLP con IVA en Santiago. En medidas económicas el monto es POR UNIDAD (puerta, ventana, rollo o paño), no por la vivienda completa. En obras mayores, cotiza con 2 o 3 maestros o empresas.",
     "aviso_legal_ui": "Orientación preliminar basada en un modelo simplificado (65% invierno / 35% verano). No reemplaza una Calificación Energética de Viviendas (CEV) oficial del MINVU ni garantiza montos exactos de ahorro en cuentas."
@@ -487,10 +487,6 @@ window.SOLUTIONS_CATALOG = {
         "vidrio": [
           "dvh_basico",
           "dvh_alto"
-        ],
-        "orientacionPrincipal": [
-          "norte",
-          "sur"
         ]
       },
       "grupo_alternativa": "film_ventana",
@@ -524,7 +520,11 @@ window.SOLUTIONS_CATALOG = {
       "tip_practico": "Aplícalo con agua jabonosa y espátula blanda solo en ventanas al poniente. Prefiere film electrostático removible si arriendas.",
       "precaucion": "No apliques láminas reflectantes sobre termopanel (DVH) por riesgo de rotura térmica, ni en ventanas al Norte porque quitan el sol gratuito del invierno.",
       "donde_comprar": "Sodimac, Easy, tiendas de vidrios y ferreterías",
-      "subsidio_ds27": "no"
+      "subsidio_ds27": "no",
+      "requiere_orientacion_alguna": [
+        "poniente"
+      ],
+      "fachada_objetivo": "poniente"
     },
     {
       "id": "B10_malla_raschel_sombra",
@@ -541,10 +541,6 @@ window.SOLUTIONS_CATALOG = {
         ],
         "nivelSombraEntorno": [
           "muy_sombreado"
-        ],
-        "orientacionPrincipal": [
-          "norte",
-          "sur"
         ]
       },
       "grupo_alternativa": "sombra_exterior",
@@ -578,7 +574,11 @@ window.SOLUTIONS_CATALOG = {
       "tip_practico": "Instálala separada unos 20 cm del vidrio para que circule el aire y retírala en invierno.",
       "precaucion": "En balcones de edificios pide autorización a la administración y asegúrala bien frente a ráfagas de viento.",
       "donde_comprar": "Sodimac, Easy, ferreterías y viveros",
-      "subsidio_ds27": "no"
+      "subsidio_ds27": "no",
+      "requiere_orientacion_alguna": [
+        "poniente"
+      ],
+      "fachada_objetivo": "poniente"
     },
     {
       "id": "B11_panel_reflectante_ignifugo",
@@ -627,7 +627,8 @@ window.SOLUTIONS_CATALOG = {
       "tip_practico": "Instala solo productos certificados para calor (lámina metálica con núcleo mineral o fibra de vidrio, nunca poliestireno expuesto) respetando las distancias de seguridad del fabricante.",
       "precaucion": "Nunca uses poliestireno (plumavit) ni materiales inflamables expuestos en muros interiores o cerca de estufas.",
       "donde_comprar": "Sodimac, Easy, tiendas de climatización",
-      "subsidio_ds27": "no"
+      "subsidio_ds27": "no",
+      "fachada_objetivo": "sur_o_fria"
     },
     {
       "id": "B12_antihongos_y_ventilacion",
@@ -733,10 +734,6 @@ window.SOLUTIONS_CATALOG = {
         ],
         "nivelSombraEntorno": [
           "muy_sombreado"
-        ],
-        "orientacionPrincipal": [
-          "norte",
-          "sur"
         ]
       },
       "grupo_alternativa": "sombra_exterior",
@@ -770,7 +767,11 @@ window.SOLUTIONS_CATALOG = {
       "tip_practico": "Elige especies verdaderamente caducifolias adaptadas a Santiago como parra (vid), glicinia o ampelopsis (enredadera virgen). Demora 1 a 2 temporadas en cubrir bien.",
       "precaucion": "Evita especies de hoja perenne (como hiedra o jazmín del cabo) frente a ventanas que necesiten sol en invierno.",
       "donde_comprar": "Viveros locales, Sodimac, Easy",
-      "subsidio_ds27": "no"
+      "subsidio_ds27": "no",
+      "requiere_orientacion_alguna": [
+        "poniente"
+      ],
+      "fachada_objetivo": "poniente"
     },
     {
       "id": "B15_cortina_gruesa_puerta",
@@ -1253,9 +1254,6 @@ window.SOLUTIONS_CATALOG = {
         ],
         "nivelSombraEntorno": [
           "muy_sombreado"
-        ],
-        "orientacionPrincipal": [
-          "sur"
         ]
       },
       "grupo_alternativa": "sombra_exterior",
@@ -1289,7 +1287,13 @@ window.SOLUTIONS_CATALOG = {
       "tip_practico": "En fachadas al Norte, poder recogerlo en invierno es clave para aprovechar el sol bajo gratuito.",
       "precaucion": "En edificios, la instalación en fachada requiere permiso de la administración.",
       "donde_comprar": "Empresas de toldos y persianas exteriores",
-      "subsidio_ds27": "no"
+      "subsidio_ds27": "no",
+      "requiere_orientacion_alguna": [
+        "norte",
+        "poniente",
+        "oriente"
+      ],
+      "fachada_objetivo": "norte_o_poniente"
     },
     {
       "id": "A10_alero_pergola_vegetacion",
@@ -1306,9 +1310,6 @@ window.SOLUTIONS_CATALOG = {
         ],
         "nivelSombraEntorno": [
           "muy_sombreado"
-        ],
-        "orientacionPrincipal": [
-          "sur"
         ]
       },
       "grupo_alternativa": "sombra_exterior",
@@ -1339,7 +1340,13 @@ window.SOLUTIONS_CATALOG = {
       "tip_practico": "Si plantas árboles (ej. liquidámbar, fresno o jacarandá), elige hoja caduca y aléjalos de cañerías y cimientos.",
       "precaucion": "Revisa permisos municipales si construyes una pérgola techada grande.",
       "donde_comprar": "Maestros de carpintería/metalmecánica y viveros",
-      "subsidio_ds27": "no"
+      "subsidio_ds27": "no",
+      "requiere_orientacion_alguna": [
+        "norte",
+        "poniente",
+        "oriente"
+      ],
+      "fachada_objetivo": "norte_o_poniente"
     },
     {
       "id": "A11_correccion_puentes_termicos_puntuales",
